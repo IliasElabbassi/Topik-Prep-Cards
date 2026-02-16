@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOPIK I Vocabulary Flashcards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', Roboto, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .app {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 18px; }
+    h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.3px; }
+    .progress-wrap { background: #e2e8f0; border-radius: 9999px; height: 8px; overflow: hidden; margin-bottom: 5px; }
+    .progress-bar  { height: 100%; background: linear-gradient(90deg,#3b82f6,#10b981); border-radius: 9999px; transition: width .4s ease; width: 0%; }
+    .progress-text { font-size: .8rem; color: #64748b; }
+
+    /* ── Stats row ── */
+    .stats-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .stat-card  { flex: 1; background: #fff; border-radius: 12px; padding: 10px 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+    .stat-val   { font-size: 1.25rem; font-weight: 700; }
+    .stat-lbl   { font-size: .65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+    /* ── Filter tabs ── */
+    .tabs { display: flex; gap: 6px; margin-bottom: 14px; background: #fff; padding: 5px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+    .tab  { flex: 1; padding: 8px 4px; border: none; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 500; background: transparent; color: #64748b; transition: all .18s; }
+    .tab.active { background: #3b82f6; color: #fff; }
+
+    /* ── Card counter ── */
+    .counter { text-align: center; font-size: .82rem; color: #64748b; margin-bottom: 10px; min-height: 1.2em; }
+
+    /* ── Flashcard ── */
+    .scene  { perspective: 1000px; height: 260px; margin-bottom: 16px; cursor: pointer; user-select: none; }
+    .card   { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform .45s; }
+    .card.flipped { transform: rotateY(180deg); }
+
+    .face {
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border-radius: 18px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px 28px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.10);
+    }
+    .face-front { background: #fff; }
+    .face-back  { background: #f0f9ff; transform: rotateY(180deg); }
+
+    .card-num { position: absolute; top: 14px; left: 18px; font-size: .72rem; color: #cbd5e1; }
+    .badge    { position: absolute; top: 12px; right: 14px; background: #10b981; color: #fff; border-radius: 9999px; padding: 2px 10px; font-size: .7rem; font-weight: 600; }
+
+    .korean  { font-size: 2.8rem; font-weight: 700; letter-spacing: 2px; color: #1e293b; margin-bottom: 4px; }
+    .hint    { font-size: .72rem; color: #cbd5e1; position: absolute; bottom: 14px; }
+
+    .english       { font-size: 1.45rem; font-weight: 600; color: #2563eb; text-align: center; margin-bottom: 12px; line-height: 1.35; }
+    .korean-small  { font-size: 1.05rem; color: #94a3b8; }
+
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 60px 20px; color: #64748b; }
+    .empty .emo { font-size: 2.8rem; margin-bottom: 12px; }
+
+    /* ── Action buttons ── */
+    .actions { display: flex; gap: 10px; margin-bottom: 12px; }
+    .btn {
+      flex: 1; padding: 13px 10px; border: none; border-radius: 12px;
+      font-size: .95rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: transform .1s, filter .1s;
+    }
+    .btn:active { transform: scale(.96); }
+    .btn-no  { background: #fee2e2; color: #ef4444; }
+    .btn-no:hover  { filter: brightness(.95); }
+    .btn-yes { background: #d1fae5; color: #059669; }
+    .btn-yes:hover { filter: brightness(.95); }
+
+    /* ── Nav buttons ── */
+    .nav { display: flex; gap: 8px; margin-bottom: 10px; }
+    .btn-nav {
+      flex: 1; padding: 9px; border: 1px solid #e2e8f0; border-radius: 10px;
+      background: #fff; color: #475569; font-size: .85rem; font-weight: 500;
+      cursor: pointer; transition: background .15s;
+    }
+    .btn-nav:hover { background: #f1f5f9; }
+    .btn-shuffle { background: #ede9fe; color: #7c3aed; border-color: #ddd6fe; }
+    .btn-shuffle:hover { background: #ddd6fe; }
+
+    .kbd-hint { text-align: center; font-size: .7rem; color: #d1d5db; margin-bottom: 14px; }
+
+    /* ── Options ── */
+    .options { display: flex; gap: 8px; margin-bottom: 8px; }
+    .btn-opt {
+      flex: 1; padding: 9px; border: 1px solid #e2e8f0; border-radius: 10px;
+      background: #fff; color: #475569; font-size: .82rem; font-weight: 500;
+      cursor: pointer; transition: background .15s;
+    }
+    .btn-opt:hover { background: #f1f5f9; }
+    .btn-opt.on { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+    .btn-reset { border-color: #fecaca; color: #ef4444; }
+    .btn-reset:hover { background: #fee2e2; }
+
+    @media (max-width: 420px) {
+      .korean  { font-size: 2.3rem; }
+      .english { font-size: 1.25rem; }
+    }
+
+    /* ── Page nav ── */
+    .page-nav {
+      display: flex; background: #1e293b;
+      border-radius: 0 0 14px 14px;
+      margin: -20px -16px 22px;
+      padding: 0 8px;
+    }
+    .page-btn {
+      flex: 1; padding: 13px 8px; border: none; background: transparent;
+      color: #94a3b8; font-size: .88rem; font-weight: 600; cursor: pointer;
+      border-bottom: 3px solid transparent; transition: all .2s; letter-spacing: .01em;
+    }
+    .page-btn.active { color: #fff; border-bottom-color: #3b82f6; }
+    .page-btn:hover:not(.active) { color: #cbd5e1; }
+
+    /* ── Word list page ── */
+    .list-page { display: none; }
+
+    .search-wrap  { position: relative; margin-bottom: 12px; }
+    .search-icon  { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; font-size: 1rem; }
+    .search-input {
+      width: 100%; padding: 10px 14px 10px 36px;
+      border: 1.5px solid #e2e8f0; border-radius: 10px;
+      background: #fff; font-size: .9rem; color: #1e293b; outline: none;
+      transition: border-color .15s;
+    }
+    .search-input:focus { border-color: #3b82f6; }
+    .search-clear {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: #e2e8f0; border: none; border-radius: 9999px;
+      width: 20px; height: 20px; cursor: pointer; font-size: .7rem; color: #64748b;
+      display: none; align-items: center; justify-content: center;
+    }
+
+    .list-filters { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .lf-btn {
+      padding: 5px 14px; border: 1.5px solid #e2e8f0; border-radius: 9999px;
+      background: #fff; color: #64748b; font-size: .78rem; font-weight: 500;
+      cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .lf-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .lf-btn.active.green { background: #10b981; border-color: #10b981; }
+    .lf-btn.active.red   { background: #ef4444; border-color: #ef4444; }
+
+    .list-info { font-size: .75rem; color: #94a3b8; margin-bottom: 8px; padding-left: 2px; }
+
+    .word-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .word-row {
+      display: flex; align-items: center; gap: 10px;
+      background: #fff; border-radius: 11px; padding: 10px 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      border-left: 3px solid #e2e8f0;
+      cursor: pointer; transition: border-color .15s, background .1s;
+    }
+    .word-row:hover { background: #f8faff; }
+    .word-row.is-learned { border-left-color: #10b981; }
+
+    .wr-num  { font-size: .68rem; color: #cbd5e1; width: 30px; flex-shrink: 0; text-align: right; }
+    .wr-body { flex: 1; min-width: 0; }
+    .wr-kor  { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+    .wr-eng  { font-size: .78rem; color: #64748b; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .wr-toggle {
+      flex-shrink: 0; width: 32px; height: 32px; border-radius: 9999px;
+      border: 2px solid #e2e8f0; background: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; transition: all .15s;
+    }
+    .wr-toggle.known { background: #d1fae5; border-color: #10b981; }
+    .wr-toggle.known:hover { background: #a7f3d0; }
+    .wr-toggle:not(.known):hover { background: #f1f5f9; border-color: #94a3b8; }
+    .wr-toggle:active { transform: scale(.88); }
+
+    .wr-study {
+      flex-shrink: 0; padding: 4px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+      background: #fff; color: #3b82f6; font-size: .73rem; font-weight: 500;
+      cursor: pointer; transition: background .12s;
+    }
+    .wr-study:hover { background: #eff6ff; border-color: #bfdbfe; }
+
+    .list-empty { text-align: center; padding: 50px 20px; color: #94a3b8; }
+    .list-empty .emo { font-size: 2.2rem; margin-bottom: 10px; }
+
+    /* ── Word detail modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(3px);
+      z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-box {
+      background: #fff; border-radius: 20px;
+      width: 100%; max-width: 400px; padding: 22px;
+      position: relative; box-shadow: 0 24px 64px rgba(0,0,0,.25);
+      animation: mIn .18s ease;
+    }
+    @keyframes mIn {
+      from { transform: scale(.93) translateY(12px); opacity: 0; }
+      to   { transform: scale(1)   translateY(0);    opacity: 1; }
+    }
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      background: #f1f5f9; border: none; border-radius: 9999px;
+      width: 28px; height: 28px; cursor: pointer; font-size: .8rem;
+      color: #64748b; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: #e2e8f0; }
+    .modal-counter { text-align: center; font-size: .75rem; color: #94a3b8; margin-bottom: 14px; }
+    .modal-scene {
+      perspective: 800px; height: 190px; cursor: pointer;
+      margin-bottom: 14px; user-select: none;
+    }
+    .modal-card {
+      width: 100%; height: 100%; position: relative;
+      transform-style: preserve-3d; transition: transform .4s;
+    }
+    .modal-card.flipped { transform: rotateY(180deg); }
+    .modal-face {
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border-radius: 14px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-front { background: #f8faff; border: 1.5px solid #e2e8f0; }
+    .modal-back  { background: #f0f9ff; border: 1.5px solid #bfdbfe; transform: rotateY(180deg); }
+    .modal-num     { position: absolute; top: 10px; left: 12px; font-size: .68rem; color: #cbd5e1; }
+    .modal-badge   { position: absolute; top: 8px; right: 12px; background: #10b981; color: #fff; border-radius: 9999px; padding: 1px 9px; font-size: .68rem; font-weight: 600; }
+    .modal-korean  { font-size: 2.4rem; font-weight: 700; letter-spacing: 2px; color: #1e293b; }
+    .modal-hint    { font-size: .7rem; color: #cbd5e1; position: absolute; bottom: 10px; }
+    .modal-english { font-size: 1.25rem; font-weight: 600; color: #2563eb; text-align: center; margin-bottom: 8px; line-height: 1.35; }
+    .modal-kor-sm  { font-size: .95rem; color: #94a3b8; }
+    .modal-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+    .modal-nav { display: flex; gap: 6px; }
+    .modal-nav button {
+      flex: 1; padding: 8px 6px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+      background: #fff; color: #475569; font-size: .8rem; font-weight: 500;
+      cursor: pointer; transition: background .12s;
+    }
+    .modal-nav button:hover { background: #f1f5f9; }
+    .modal-nav .modal-close-btn { color: #94a3b8; font-size: .75rem; }
+    /* Dark modal */
+    [data-dark] .modal-box      { background: #1e293b; }
+    [data-dark] .modal-close    { background: #334155; color: #94a3b8; }
+    [data-dark] .modal-close:hover { background: #475569; }
+    [data-dark] .modal-front    { background: #162032; border-color: #334155; }
+    [data-dark] .modal-back     { background: #0e2a45; border-color: #1e40af; }
+    [data-dark] .modal-korean   { color: #f1f5f9; }
+    [data-dark] .modal-hint     { color: #334155; }
+    [data-dark] .modal-english  { color: #60a5fa; }
+    [data-dark] .modal-kor-sm   { color: #475569; }
+    [data-dark] .modal-counter  { color: #475569; }
+    [data-dark] .modal-nav button { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    [data-dark] .modal-nav button:hover { background: #263548; }
+
+    /* ── Layout toggle buttons ── */
+    .layout-btns { display: flex; gap: 5px; }
+    .layout-btn {
+      padding: 5px 11px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+      background: #fff; color: #64748b; font-size: .82rem; cursor: pointer;
+      transition: all .15s; font-weight: 500;
+    }
+    .layout-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+    /* ── Compact layout ── */
+    .word-list.layout-compact { gap: 3px; }
+    .word-list.layout-compact .word-row { padding: 7px 12px; border-radius: 8px; }
+    .word-list.layout-compact .wr-kor   { font-size: .95rem; }
+    .word-list.layout-compact .wr-eng   { display: none; }
+    .word-list.layout-compact .wr-study { display: none; }
+
+    /* ── Grid layout ── */
+    .word-list.layout-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+    .word-list.layout-grid .word-row {
+      flex-direction: column; align-items: flex-start; gap: 4px;
+      padding: 12px 12px 10px; position: relative;
+    }
+    .word-list.layout-grid .wr-num   { width: auto; }
+    .word-list.layout-grid .wr-body  { width: 100%; }
+    .word-list.layout-grid .wr-kor   { font-size: 1.1rem; }
+    .word-list.layout-grid .wr-eng   { white-space: normal; }
+    .word-list.layout-grid .wr-study { display: none; }
+    .word-list.layout-grid .wr-toggle {
+      position: absolute; top: 8px; right: 8px;
+      width: 26px; height: 26px; font-size: .72rem;
+    }
+
+    /* ── Dark mode toggle button ── */
+    .dark-toggle {
+      padding: 8px 10px; border: none; background: transparent;
+      color: #94a3b8; font-size: 1.1rem; cursor: pointer;
+      transition: color .2s; flex-shrink: 0; line-height: 1;
+    }
+    .dark-toggle:hover { color: #f1f5f9; }
+
+    /* ── Dark mode overrides ── */
+    [data-dark] body            { background: #0f172a; color: #f1f5f9; }
+    [data-dark] .page-nav       { background: #020617; }
+    [data-dark] h1              { color: #f1f5f9; }
+    [data-dark] .progress-wrap  { background: #1e293b; }
+    [data-dark] .progress-text  { color: #475569; }
+    [data-dark] .stat-card      { background: #1e293b; box-shadow: none; }
+    [data-dark] .stat-val       { color: #f1f5f9; }
+    [data-dark] .stat-lbl       { color: #475569; }
+    [data-dark] .tabs           { background: #1e293b; box-shadow: none; }
+    [data-dark] .tab            { color: #475569; }
+    [data-dark] .counter        { color: #475569; }
+    [data-dark] .face-front     { background: #1e293b; box-shadow: 0 6px 24px rgba(0,0,0,.5); }
+    [data-dark] .face-back      { background: #162032; box-shadow: 0 6px 24px rgba(0,0,0,.5); }
+    [data-dark] .korean         { color: #f1f5f9; }
+    [data-dark] .english        { color: #60a5fa; }
+    [data-dark] .korean-small   { color: #475569; }
+    [data-dark] .card-num       { color: #334155; }
+    [data-dark] .hint           { color: #334155; }
+    [data-dark] .badge          { background: #065f46; color: #6ee7b7; }
+    [data-dark] .btn-no         { background: #450a0a; color: #fca5a5; }
+    [data-dark] .btn-yes        { background: #052e16; color: #6ee7b7; }
+    [data-dark] .btn-nav        { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    [data-dark] .btn-nav:hover  { background: #263548; }
+    [data-dark] .btn-shuffle    { background: #2e1065; color: #c4b5fd; border-color: #4c1d95; }
+    [data-dark] .btn-opt        { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    [data-dark] .btn-opt.on     { background: #422006; border-color: #92400e; color: #fcd34d; }
+    [data-dark] .btn-reset      { border-color: #7f1d1d; color: #fca5a5; }
+    [data-dark] .btn-reset:hover{ background: #450a0a; }
+    [data-dark] .kbd-hint       { color: #334155; }
+    [data-dark] .empty          { color: #475569; }
+    [data-dark] .search-input              { background: #1e293b; border-color: #334155; color: #f1f5f9; }
+    [data-dark] .search-input::placeholder { color: #334155; }
+    [data-dark] .search-input:focus        { border-color: #3b82f6; }
+    [data-dark] .search-clear              { background: #334155; color: #94a3b8; }
+    [data-dark] .lf-btn                    { background: #1e293b; border-color: #334155; color: #64748b; }
+    [data-dark] .lf-btn.active             { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    [data-dark] .list-info                 { color: #334155; }
+    [data-dark] .layout-btn                { background: #1e293b; border-color: #334155; color: #64748b; }
+    [data-dark] .layout-btn.active         { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+    [data-dark] .word-row                  { background: #1e293b; border-left-color: #334155; box-shadow: none; }
+    [data-dark] .word-row:hover            { background: #1a2d42; }
+    [data-dark] .word-row.is-learned       { border-left-color: #10b981; }
+    [data-dark] .wr-num                    { color: #334155; }
+    [data-dark] .wr-kor                    { color: #f1f5f9; }
+    [data-dark] .wr-eng                    { color: #475569; }
+    [data-dark] .wr-toggle                 { background: #1e293b; border-color: #334155; color: #64748b; }
+    [data-dark] .wr-toggle.known           { background: #052e16; border-color: #10b981; color: #6ee7b7; }
+    [data-dark] .wr-toggle:not(.known):hover { background: #263548; }
+    [data-dark] .wr-study                  { background: #1e293b; border-color: #334155; color: #60a5fa; }
+    [data-dark] .wr-study:hover            { background: #162032; border-color: #3b82f6; }
+    [data-dark] .list-empty                { color: #475569; }
+
+    /* ── Review page ── */
+    .review-page { display: none; }
+    .rv-section { display: none; }
+    .rv-section.active { display: block; }
+
+    .rv-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; text-align: center; color: #1e293b; }
+
+    /* Setup */
+    .rv-sources { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+    .rv-src-card {
+      padding: 14px 8px; border: 2px solid #e2e8f0; border-radius: 14px;
+      background: #fff; text-align: center; cursor: pointer; transition: all .18s;
+    }
+    .rv-src-card:hover { border-color: #94a3b8; }
+    .rv-src-card.selected { border-color: #3b82f6; background: #eff6ff; }
+    .rv-src-icon  { font-size: 1.5rem; margin-bottom: 4px; }
+    .rv-src-label { font-size: .75rem; font-weight: 600; color: #475569; }
+    .rv-src-count { font-size: .68rem; color: #94a3b8; margin-top: 2px; }
+
+    .rv-slider-wrap  { margin-bottom: 20px; }
+    .rv-slider-label { display: flex; justify-content: space-between; font-size: .82rem; color: #64748b; margin-bottom: 8px; }
+    .rv-slider-label strong { color: #1e293b; font-size: .95rem; }
+    .rv-slider { width: 100%; accent-color: #3b82f6; cursor: pointer; }
+
+    .rv-shuffle-label {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+      background: #fff; cursor: pointer; font-size: .85rem; color: #475569; font-weight: 500;
+      user-select: none; margin-bottom: 20px;
+    }
+    .rv-shuffle-label input { accent-color: #3b82f6; width: 16px; height: 16px; cursor: pointer; }
+
+    /* Session */
+    .rv-progress-wrap { background: #e2e8f0; border-radius: 9999px; height: 6px; margin-bottom: 8px; overflow: hidden; }
+    .rv-progress-bar  { height: 100%; background: linear-gradient(90deg,#3b82f6,#10b981); border-radius: 9999px; transition: width .3s; width: 0%; }
+    .rv-progress-info { display: flex; justify-content: space-between; align-items: center; font-size: .75rem; color: #64748b; margin-bottom: 16px; }
+    .rv-prog-correct  { color: #10b981; font-weight: 600; }
+    .rv-prog-missed   { color: #ef4444; font-weight: 600; }
+    .rv-prog-pos      { font-size: .72rem; }
+
+    .rv-scene { perspective: 900px; height: 220px; cursor: pointer; margin-bottom: 14px; user-select: none; }
+    .rv-card  { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform .42s; }
+    .rv-card.flipped { transform: rotateY(180deg); }
+    .rv-face {
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border-radius: 16px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 22px;
+    }
+    .rv-front { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.09); }
+    .rv-back  { background: #f0f9ff; box-shadow: 0 4px 20px rgba(0,0,0,.09); transform: rotateY(180deg); }
+    .rv-card-num  { position: absolute; top: 12px; left: 14px; font-size: .68rem; color: #cbd5e1; }
+    .rv-flip-hint { font-size: .7rem; color: #cbd5e1; position: absolute; bottom: 12px; }
+    .rv-korean  { font-size: 2.5rem; font-weight: 700; letter-spacing: 2px; color: #1e293b; }
+    .rv-english { font-size: 1.3rem; font-weight: 600; color: #2563eb; text-align: center; margin-bottom: 8px; line-height: 1.35; }
+    .rv-kor-sm  { font-size: .95rem; color: #94a3b8; }
+
+    .rv-answer-btns { display: flex; gap: 10px; margin-bottom: 12px; }
+    .btn:disabled { opacity: .35; cursor: not-allowed; filter: none !important; transform: none !important; }
+    .rv-end-link {
+      text-align: center; font-size: .75rem; color: #94a3b8; cursor: pointer;
+      text-decoration: underline; text-underline-offset: 2px;
+    }
+    .rv-end-link:hover { color: #64748b; }
+
+    /* Summary */
+    .rv-summary { text-align: center; padding: 10px 0; }
+    .rv-score-emo   { font-size: 3rem; margin-bottom: 8px; }
+    .rv-score-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+    .rv-score-sub   { font-size: .85rem; color: #64748b; margin-bottom: 20px; }
+    .rv-score-grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+    .rv-score-card  { background: #f8faff; border-radius: 12px; padding: 12px 8px; }
+    .rv-score-val   { font-size: 1.5rem; font-weight: 700; }
+    .rv-score-lbl   { font-size: .65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+    .rv-score-val.green { color: #10b981; }
+    .rv-score-val.red   { color: #ef4444; }
+    .rv-score-val.blue  { color: #3b82f6; }
+    .rv-summary-btns { display: flex; flex-direction: column; gap: 8px; }
+
+    /* Dark mode for review */
+    [data-dark] .rv-title         { color: #f1f5f9; }
+    [data-dark] .rv-src-card      { background: #1e293b; border-color: #334155; }
+    [data-dark] .rv-src-card:hover{ border-color: #475569; }
+    [data-dark] .rv-src-card.selected { background: #1e3a5f; border-color: #3b82f6; }
+    [data-dark] .rv-src-label     { color: #94a3b8; }
+    [data-dark] .rv-src-count     { color: #334155; }
+    [data-dark] .rv-slider-label  { color: #475569; }
+    [data-dark] .rv-slider-label strong { color: #f1f5f9; }
+    [data-dark] .rv-shuffle-label { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    [data-dark] .rv-progress-wrap { background: #1e293b; }
+    [data-dark] .rv-progress-info { color: #475569; }
+    [data-dark] .rv-front  { background: #1e293b; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+    [data-dark] .rv-back   { background: #162032; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+    [data-dark] .rv-card-num   { color: #334155; }
+    [data-dark] .rv-flip-hint  { color: #334155; }
+    [data-dark] .rv-korean     { color: #f1f5f9; }
+    [data-dark] .rv-english    { color: #60a5fa; }
+    [data-dark] .rv-kor-sm     { color: #475569; }
+    [data-dark] .rv-end-link   { color: #475569; }
+    [data-dark] .rv-end-link:hover { color: #94a3b8; }
+    [data-dark] .rv-score-card { background: #1e293b; }
+    [data-dark] .rv-score-lbl  { color: #475569; }
+    [data-dark] .rv-score-title{ color: #f1f5f9; }
+    [data-dark] .rv-score-sub  { color: #475569; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Page Navigation ── -->
+  <nav class="page-nav">
+    <button class="page-btn active" id="nav-cards" onclick="switchPage('cards')">📇 Flashcards</button>
+    <button class="page-btn"        id="nav-list"   onclick="switchPage('list')">📋 Word List</button>
+    <button class="page-btn"        id="nav-review" onclick="switchPage('review')">📝 Review</button>
+    <button class="dark-toggle"     id="darkToggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+  </nav>
+
+  <header>
+    <h1>🇰🇷 TOPIK I Flashcards</h1>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">0 / 1671 learned</div>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" id="sTotal">1671</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-val" id="sLearned" style="color:#10b981">0</div><div class="stat-lbl">Learned</div></div>
+    <div class="stat-card"><div class="stat-val" id="sLeft" style="color:#3b82f6">1671</div><div class="stat-lbl">Remaining</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-all"      onclick="setFilter('all')">All (1671)</button>
+    <button class="tab"        id="tab-learning" onclick="setFilter('learning')">Learning</button>
+    <button class="tab"        id="tab-learned"  onclick="setFilter('learned')">Learned</button>
+  </div>
+
+  <div class="counter" id="counter"></div>
+
+  <div id="cardArea">
+    <div class="scene" id="scene" onclick="flipCard()">
+      <div class="card" id="card">
+        <div class="face face-front">
+          <span class="card-num"  id="cNum"></span>
+          <span class="badge"     id="cBadge" style="display:none">✓ Learned</span>
+          <div  class="korean"    id="cKorean"></div>
+          <div  class="hint">tap to reveal</div>
+        </div>
+        <div class="face face-back">
+          <span class="card-num" id="cNumB"></span>
+          <div  class="english"  id="cEnglish"></div>
+          <div  class="korean-small" id="cKoreanB"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-no"  onclick="markCard(false)">✗ Still Learning</button>
+      <button class="btn btn-yes" onclick="markCard(true)">✓ Know It!</button>
+    </div>
+
+    <div class="nav">
+      <button class="btn-nav" onclick="go(-1)">← Prev</button>
+      <button class="btn-nav btn-shuffle" onclick="shuffle()">⇌ Shuffle</button>
+      <button class="btn-nav" onclick="go(1)">Next →</button>
+    </div>
+
+    <div class="kbd-hint">Space: flip &nbsp;·&nbsp; ←/→: navigate &nbsp;·&nbsp; K: know it &nbsp;·&nbsp; D: don't know</div>
+  </div>
+
+  <div id="emptyArea" class="empty" style="display:none">
+    <div class="emo" id="emptyEmo">🎉</div>
+    <div id="emptyMsg"></div>
+  </div>
+
+  <div class="options">
+    <button class="btn-opt" id="btnAutoFlip" onclick="toggleAutoFlip()">Auto-flip: Off</button>
+    <button class="btn-opt btn-reset" onclick="resetProgress()">↺ Reset Progress</button>
+  </div>
+
+  <!-- ── Word List Page ── -->
+  <div class="list-page" id="listPage">
+
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="listSearch" type="text"
+             placeholder="Search Korean or English…"
+             oninput="onListSearch(this.value)">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+      <div class="list-filters" style="margin-bottom:0">
+        <button class="lf-btn active" id="lf-all"      onclick="setListFilter('all')">All</button>
+        <button class="lf-btn"        id="lf-learning" onclick="setListFilter('learning')">Learning</button>
+        <button class="lf-btn"        id="lf-learned"  onclick="setListFilter('learned')">Learned</button>
+      </div>
+      <div class="layout-btns">
+        <button class="layout-btn active" id="layout-list"    onclick="setLayout('list')"    title="List view">☰ List</button>
+        <button class="layout-btn"        id="layout-compact" onclick="setLayout('compact')" title="Compact view">≡ Compact</button>
+        <button class="layout-btn"        id="layout-grid"    onclick="setLayout('grid')"    title="Grid view">⊞ Grid</button>
+      </div>
+    </div>
+
+    <div class="list-info" id="listInfo"></div>
+    <div class="word-list" id="wordList"></div>
+
+  </div>
+
+  <!-- ── Review Page ── -->
+  <div class="review-page" id="reviewPage">
+
+    <!-- Setup -->
+    <div class="rv-section active" id="rvSetup">
+      <div class="rv-title">📝 Review Session</div>
+
+      <div class="rv-sources">
+        <div class="rv-src-card selected" id="rvsrc-learning" onclick="setReviewSource('learning')">
+          <div class="rv-src-icon">📖</div>
+          <div class="rv-src-label">Learning</div>
+          <div class="rv-src-count" id="rvsrc-learning-count">0 words</div>
+        </div>
+        <div class="rv-src-card" id="rvsrc-all" onclick="setReviewSource('all')">
+          <div class="rv-src-icon">🗂️</div>
+          <div class="rv-src-label">All</div>
+          <div class="rv-src-count" id="rvsrc-all-count">1671 words</div>
+        </div>
+        <div class="rv-src-card" id="rvsrc-learned" onclick="setReviewSource('learned')">
+          <div class="rv-src-icon">✅</div>
+          <div class="rv-src-label">Learned</div>
+          <div class="rv-src-count" id="rvsrc-learned-count">0 words</div>
+        </div>
+      </div>
+
+      <div class="rv-slider-wrap">
+        <div class="rv-slider-label">
+          <span>Words per session</span>
+          <strong id="rvCountLabel">20</strong>
+        </div>
+        <input type="range" class="rv-slider" id="rvCountSlider" min="5" max="50" step="5" value="20"
+               oninput="updateReviewCount(this.value)">
+      </div>
+
+      <label class="rv-shuffle-label">
+        <input type="checkbox" id="rvShuffle" checked>
+        ⇌ Shuffle words
+      </label>
+
+      <button class="btn btn-yes" style="width:100%;margin-bottom:8px" onclick="startReview()">▶ Start Review</button>
+    </div>
+
+    <!-- Session -->
+    <div class="rv-section" id="rvSession">
+      <div class="rv-progress-wrap"><div class="rv-progress-bar" id="rvProgressBar"></div></div>
+      <div class="rv-progress-info">
+        <span class="rv-prog-pos" id="rvPos">1 / 20</span>
+        <span><span class="rv-prog-correct" id="rvCorrect">✓ 0</span> &nbsp; <span class="rv-prog-missed" id="rvMissed">✗ 0</span></span>
+      </div>
+
+      <div class="rv-scene" onclick="reviewFlip()">
+        <div class="rv-card" id="rvCard">
+          <div class="rv-face rv-front">
+            <span class="rv-card-num" id="rvNum"></span>
+            <div class="rv-korean" id="rvKorean"></div>
+            <div class="rv-flip-hint">tap to reveal</div>
+          </div>
+          <div class="rv-face rv-back">
+            <span class="rv-card-num" id="rvNumB"></span>
+            <div class="rv-english" id="rvEnglish"></div>
+            <div class="rv-kor-sm"  id="rvKorSm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rv-answer-btns">
+        <button class="btn btn-no"  id="rvBtnMissed" onclick="reviewAnswer(false)" disabled>✗ Missed it</button>
+        <button class="btn btn-yes" id="rvBtnGot"    onclick="reviewAnswer(true)"  disabled>✓ Got it!</button>
+      </div>
+
+      <div class="rv-end-link" onclick="endReviewEarly()">End session early</div>
+    </div>
+
+    <!-- Summary -->
+    <div class="rv-section" id="rvSummary">
+      <div class="rv-summary">
+        <div class="rv-score-emo"   id="rvSumEmo">🎉</div>
+        <div class="rv-score-title" id="rvSumTitle">Great work!</div>
+        <div class="rv-score-sub"   id="rvSumSub"></div>
+        <div class="rv-score-grid">
+          <div class="rv-score-card">
+            <div class="rv-score-val green" id="rvSumGot">0</div>
+            <div class="rv-score-lbl">Got It</div>
+          </div>
+          <div class="rv-score-card">
+            <div class="rv-score-val red" id="rvSumMissed">0</div>
+            <div class="rv-score-lbl">Missed</div>
+          </div>
+          <div class="rv-score-card">
+            <div class="rv-score-val blue" id="rvSumPct">0%</div>
+            <div class="rv-score-lbl">Score</div>
+          </div>
+        </div>
+        <div class="rv-summary-btns">
+          <button class="btn btn-no"  id="rvBtnMissedAgain" onclick="reviewMissed()" style="display:none">↺ Review Missed (<span id="rvMissedCount">0</span>)</button>
+          <button class="btn btn-yes" onclick="showReviewSetup()">✦ New Session</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ── Word detail modal ── -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-counter" id="modalCounter"></div>
+
+    <div class="modal-scene" onclick="modalFlip()">
+      <div class="modal-card" id="modalCard">
+        <div class="modal-face modal-front">
+          <span class="modal-num"   id="modalNum"></span>
+          <span class="modal-badge" id="modalBadge" style="display:none">✓ Learned</span>
+          <div  class="modal-korean" id="modalKorean"></div>
+          <div  class="modal-hint">tap to reveal</div>
+        </div>
+        <div class="modal-face modal-back">
+          <span class="modal-num" id="modalNumB"></span>
+          <div  class="modal-english" id="modalEnglish"></div>
+          <div  class="modal-kor-sm"  id="modalKorSm"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-no"  onclick="modalMark(false)">✗ Still Learning</button>
+      <button class="btn btn-yes" onclick="modalMark(true)">✓ Know It!</button>
+    </div>
+    <div class="modal-nav">
+      <button onclick="modalGo(-1)">← Prev</button>
+      <button class="modal-close-btn" onclick="closeModal()">✕ Close</button>
+      <button onclick="modalGo(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// Vocabulary data  [id, korean, english]
+// ─────────────────────────────────────────────
+const V = [
+[1,"가게","store, shop"],[2,"가격","price"],[3,"가구","furniture"],[4,"가깝다","close"],[5,"가끔","sometimes"],
+[6,"가다","go"],[7,"가르치다","teach"],[8,"가방","bag"],[9,"가볍다","light"],[10,"가수","singer"],
+[11,"가슴","chest, breast"],[12,"가요","song"],[13,"가운데","middle"],[14,"가위","scissors"],[15,"가을","autumn, fall"],
+[16,"가장","most"],[17,"가져가다","take away"],[18,"가져오다","bring"],[19,"가족","family"],[20,"가지","branch"],
+[21,"가지다","have"],[22,"각","each"],[23,"간","while"],[24,"간단하다","simple, easy"],[25,"간단히","simply"],
+[26,"간식","snack"],[27,"간장","soy sauce"],[28,"간호사","nurse"],[29,"갈비","Galbi, spareribs"],[30,"갈비탕","Galbitang, spareribs soup"],
+[31,"갈색","brown"],[32,"갈아타다","transfer"],[33,"감","persimmon"],[34,"감기","cold"],[35,"감기약","cold medicine"],
+[36,"감다","close (eyes)"],[37,"감동","sensation"],[38,"감동하다","be impressed"],[39,"감사","thank"],[40,"감사드립니다","thank you"],
+[41,"감사하다","thank, appreciate"],[42,"감사합니다","thank you"],[43,"감자","potato"],[44,"감자탕","Gamjatang, potato soup"],[45,"갑자기","suddenly"],
+[46,"값","price"],[47,"강","river"],[48,"강아지","puppy"],[49,"강좌","lecture"],[50,"갖다","have"],
+[51,"같다","same"],[52,"같이","together"],[53,"개","dog, piece(s)"],[54,"개나리","forsythia"],[55,"개인","individual"],
+[56,"거기","there"],[57,"거리","street"],[58,"거실","living room"],[59,"거울","mirror"],[60,"거의","almost, nearly"],
+[61,"거짓말","lie"],[62,"걱정","anxiety, concern"],[63,"걱정하다","worry"],[64,"건강","health"],[65,"건강하다","be healthy"],
+[66,"건너가다","cross (a road)"],[67,"건너다","cross over"],[68,"건너편","other side, opposite side"],[69,"건물","building"],[70,"건배","cheers, toast"],
+[71,"걷다","walk"],[72,"걸다","bet, call"],[73,"걸리다","get caught, take (time)"],[74,"걸어가다","walk (go)"],[75,"걸어오다","walk (come)"],
+[76,"검은색","black"],[77,"것","that, thing, it"],[78,"게임","game"],[79,"겨울","winter"],[80,"겨울방학","winter vacation"],
+[81,"결과","result"],[82,"결정","decision"],[83,"결정하다","decide"],[84,"결혼","marriage"],[85,"결혼식","wedding ceremony"],
+[86,"결혼하다","get married"],[87,"경기","competition, game"],[88,"경기장","stadium, arena"],[89,"경복궁","Gyeongbokgung"],[90,"경주","Gyeongju"],
+[91,"경찰","police"],[92,"경찰관","police officer"],[93,"경찰서","police office"],[94,"경치","view, landscape"],[95,"경험","experience"],
+[96,"계단","stairs"],[97,"계란","egg"],[98,"계산하다","calculate"],[99,"계속","continue"],[100,"계시다","be, exist (honorific)"],
+[101,"계절","season"],[102,"계획","plan"],[103,"고기","meat"],[104,"고등학교","high school"],[105,"고등학생","high school student"],
+[106,"고르다","choose"],[107,"고마웠습니다","Thank you (past tense)"],[108,"고맙다","thank"],[109,"고맙습니다","Thank you"],[110,"고모","paternal aunt"],
+[111,"고모부","paternal uncle"],[112,"고속버스","express bus"],[113,"고양이","cat"],[114,"고장","broken, malfunction"],[115,"고추","red pepper"],
+[116,"고추장","Kochujang, red pepper paste"],[117,"고치다","fix"],[118,"고프다","hungry"],[119,"고향","hometown"],[120,"곧","soon"],
+[121,"골목","alley"],[122,"골프","golf"],[123,"곱다","beautiful"],[124,"곳","place"],[125,"공","ball"],
+[126,"공간","space"],[127,"공기","air"],[128,"공무원","public official"],[129,"공부","study"],[130,"공부하다","study"],
+[131,"공연","show, public performance"],[132,"공원","park"],[133,"공중전화","payphone, public phone"],[134,"공짜","free"],[135,"공책","notebook, note"],
+[136,"공항","airport"],[137,"공휴일","public holiday"],[138,"과","division"],[139,"과거","past"],[140,"과일","fruit"],
+[141,"과자","snack"],[142,"과학","science"],[143,"관계","relation"],[144,"관광하다","travel, sightsee"],[145,"관심","attention, interest"],
+[146,"광고","advertisement"],[147,"괜찮다","be okay"],[148,"괜찮습니다","It's fine."],[149,"교과서","textbook"],[150,"교수","professor"],
+[151,"교실","classroom"],[152,"교체","substitute, change"],[153,"교통","traffic"],[154,"교통사고","traffic accident"],[155,"교회","church"],
+[156,"구","9"],[157,"구경하다","take a look"],[158,"구두","shoes"],[159,"구름","cloud"],[160,"구십","90"],
+[161,"구월","September"],[162,"구하다","save, seek, get"],[163,"국","soup"],[164,"국내","domestic"],[165,"국립","national, state"],
+[166,"국수","noodle"],[167,"국어","Korean language"],[168,"국적","nationality, country of citizenship"],[169,"국제","international"],[170,"군인","soldier, military personnel"],
+[171,"굽다","bake"],[172,"권","book(s)"],[173,"귀","ear"],[174,"귀엽다","cute"],[175,"규칙","rule"],
+[176,"귤","mandarin orange"],[177,"그","it"],[178,"그거","it"],[179,"그것","it"],[180,"그곳","there"],
+[181,"그날","that day"],[182,"그냥","just, as it is"],[183,"그동안","meantime, meanwhile, up to now"],[184,"그들","them, they"],[185,"그때","then, at that time"],
+[186,"그래","Yes, Yeah"],[187,"그래서","so, thus"],[188,"그램","gram"],[189,"그러나","but, however"],[190,"그러니까","so, because"],
+[191,"그러면","then, if so"],[192,"그런","then, such"],[193,"그런데","by the way, however"],[194,"그럼","then"],[195,"그렇게","like that, so"],
+[196,"그렇구나","well, I see."],[197,"그렇다","Yes, that's it."],[198,"그렇습니다","That's right."],[199,"그렇지만","nevertheless, but"],[200,"그릇","bowl, container, tableware"],
+[201,"그리고","and"],[202,"그리다","draw"],[203,"그림","drawing, picture"],[204,"그만","stop, finish"],[205,"그분","his, the person"],
+[206,"그저께","day before yesterday"],[207,"그중","among them"],[208,"그쪽","there, the person"],[209,"그치다","stop, end, cease"],[210,"극장","theater, cinema"],
+[211,"근처","nearby, neighborhood"],[212,"글","post, sentence, character"],[213,"글쎄요","I do not know., well, I guess"],[214,"금방","soon, a little while ago"],[215,"금연","no smoking"],
+[216,"금요일","Friday"],[217,"금주","abstinence, temperance"],[218,"급","class, grade"],[219,"급하다","hurry, urgent"],[220,"기간","term, period"],
+[221,"기다리다","wait"],[222,"기르다","cultivate, grow"],[223,"기름","oil, gasoline"],[224,"기분","feeling"],[225,"기뻐하다","glad, delight"],
+[226,"기쁘다","happy"],[227,"기사","article, driver, engineer"],[228,"기숙사","dormitory"],[229,"기억하다","remember"],[230,"기온","temperature"],
+[231,"기자","reporter"],[232,"기차","train"],[233,"기침","cough"],[234,"기타","other"],[235,"긴장되다","be nervous"],
+[236,"길","way, road"],[237,"길다","long"],[238,"김","seaweed"],[239,"김밥","Kimbab"],[240,"김치","Kimchi"],
+[241,"김치찌개","Kimchi stew"],[242,"김포공항","Gimpo International Airport"],[243,"까만색","black color"],[244,"까맣다","black"],[245,"깎다","cut, shave"],
+[246,"깜짝","startled, surprised"],[247,"깨끗하다","clean"],[248,"깨다","wake up, crack, break"],[249,"깨지다","chip, crack, break"],[250,"꺼내다","take out"],
+[251,"껌","chewing gum"],[252,"꼭","exactly, absolutely"],[253,"꽃","flower"],[254,"꽃집","florist"],[255,"꾸다","dream"],
+[256,"꿈","dream"],[257,"끄다","turn off, extinguish"],[258,"끓이다","boil"],[259,"끝","end"],[260,"끝나다","finish, end"],
+[261,"끝내다","finish"],[262,"끼다","put on, plug"],[263,"나","I"],[264,"나가다","go out, get out"],[265,"나누다","share, divide"],
+[266,"나다","occur, come out"],[267,"나라","country"],[268,"나무","tree"],[269,"나빠지다","spoil, deteriorate"],[270,"나쁘다","bad"],
+[271,"나오다","come out, appear"],[272,"나이","age, old"],[273,"나중","later, after"],[274,"나타나다","appear"],[275,"나흘","four days"],
+[276,"낚시","fishing"],[277,"날","day"],[278,"날씨","weather"],[279,"날짜","date"],[280,"남","south, man"],
+[281,"남기다","leave"],[282,"남녀","men and women"],[283,"남대문시장","Namdaemun market"],[284,"남동생","younger brother"],[285,"남미","South America"],
+[286,"남북","north and south"],[287,"남자","man"],[288,"남쪽","south"],[289,"남편","husband"],[290,"남학생","male student"],
+[291,"낮","day, noon, during the day"],[292,"낮다","low"],[293,"내","of mine, my"],[294,"내가","I"],[295,"내과","internal medicine"],
+[296,"내년","next year"],[297,"내다","pay, put out"],[298,"내려가다","go down"],[299,"내려오다","come down"],[300,"내리다","go down"],
+[301,"내용","content"],[302,"내일","tomorrow"],[303,"냄비","pot"],[304,"냄새","smell"],[305,"냉면","cold noodle"],
+[306,"냉장고","refrigerator"],[307,"너","you"],[308,"너무","too, very"],[309,"넓다","wide"],[310,"넘다","exceed, more than"],
+[311,"넘어지다","fall down, fall"],[312,"넣다","put in"],[313,"네","yes, 4"],[314,"넥타이","necktie"],[315,"넷","4"],
+[316,"넷째","fourth"],[317,"년","year"],[318,"노란색","yellow color"],[319,"노랗다","yellow"],[320,"노래","song"],
+[321,"노래방","Karaoke shop"],[322,"노래하다","sing"],[323,"노력하다","endeavor, strive"],[324,"노트","note"],[325,"녹색","green"],
+[326,"녹차","green tea"],[327,"놀다","play"],[328,"놀라다","be surprised"],[329,"농구","basketball"],[330,"높다","high"],
+[331,"놓다","put"],[332,"누가","who"],[333,"누구","who"],[334,"누나","sister (as seen from the younger brother)"],[335,"누르다","press down, push"],
+[336,"눈","eye, snow"],[337,"눈물","tear"],[338,"눈사람","snowman"],[339,"눈싸움","snowball fight"],[340,"눕다","lie down, sleep"],
+[341,"뉴스","news"],[342,"뉴욕","New York"],[343,"느끼다","feel"],[344,"느낌","feeling"],[345,"느리다","slow"],
+[346,"늘","always"],[347,"늘다","gain, increase"],[348,"능력","ability"],[349,"늦다","late, delay"],[350,"늦잠","oversleeping, sleeping in late"],
+[351,"님","Sir"],[352,"다","all, whole"],[353,"다녀오다","return, come back"],[354,"다니다","go, commute"],[355,"다르다","different"],
+[356,"다른","other, another, different"],[357,"다리","bridge, leg, foot"],[358,"다섯","5"],[359,"다시","again"],[360,"다음","next, after"],
+[361,"다음달","next month"],[362,"다음주","next week"],[363,"다음해","next year, following year"],[364,"다이어트","diet"],[365,"다치다","hurt"],
+[366,"닦다","wipe, polish"],[367,"단어","word"],[368,"단점","disadvantage, shortcoming"],[369,"닫다","close"],[370,"닫히다","shut, close"],
+[371,"달","month, moon"],[372,"달걀","egg"],[373,"달다","sweet"],[374,"달러","dollar"],[375,"달력","calendar"],
+[376,"달리다","run"],[377,"닭","chicken, hen"],[378,"닭고기","chicken"],[379,"닮다","resemble"],[380,"담그다","dip, pickle"],
+[381,"담배","tobacco"],[382,"답장","reply"],[383,"당근","carrot"],[384,"당신","you"],[385,"대","versus, large"],
+[386,"대답","answer"],[387,"대답하다","answer, reply"],[388,"대부분","mostly, almost"],[389,"대사관","embassy"],[390,"대학","university, college"],
+[391,"대학교","university, college"],[392,"대학생","college student"],[393,"대학원","graduate school"],[394,"대학원생","graduate student"],[395,"대한민국","Republic of Korea, South Korea"],
+[396,"대화","conversation, dialogue"],[397,"대회","competition, tournament"],[398,"댁","house"],[399,"더","more"],[400,"더럽다","dirty"],
+[401,"더운물","hot water"],[402,"덕분","thanks for, thanks to"],[403,"덥다","hot"],[404,"덮다","cover"],[405,"데리다","bring, take along"],
+[406,"데이트","date, dating"],[407,"도로","road"],[408,"도서관","library"],[409,"도시","city"],[410,"도와주다","help"],
+[411,"도움","help, assistance"],[412,"도착","arrival"],[413,"도착하다","arrive"],[414,"도쿄","Tokyo"],[415,"독서","reading"],
+[416,"독서실","reading room"],[417,"독서하다","read"],[418,"독일","Germany"],[419,"돈","money"],[420,"돌아가다","return, go back"],
+[421,"돌아오다","come back, come home"],[422,"돕다","help"],[423,"동네","town, neighborhood"],[424,"동대문시장","Dongdaemun market"],[425,"동물","animal"],
+[426,"동생","brother, sister"],[427,"동아리","club, group"],[428,"동안","during, between"],[429,"동양","eastern, orient"],[430,"동전","coin"],
+[431,"동쪽","east"],[432,"돼지","pig"],[433,"돼지고기","pork"],[434,"되다","become"],[435,"된장","fermented soybean paste"],
+[436,"된장국","soybean paste soup"],[437,"된장찌개","soybean paste stew"],[438,"두","two"],[439,"두껍다","thick"],[440,"두다","put"],
+[441,"두부","tofu"],[442,"두부찌개","tofu soup"],[443,"둘","2"],[444,"둘째","second, the second of"],[445,"뒤","rear, back"],
+[446,"뒤쪽","behind, back"],[447,"드라마","drama"],[448,"드리다","give"],[449,"드시다","eat (honorific)"],[450,"듣기","listening, hearing"],
+[451,"듣다","listen"],[452,"들","field, -s"],[453,"들다","hold, enter"],[454,"들어가다","go in, enter"],[455,"들어오다","come in, enter"],
+[456,"등","etc, back"],[457,"등산","hiking, mountain-climbing"],[458,"등산복","mountaineering clothing"],[459,"등산화","hiking boots, climbing shoes"],[460,"디브이디","DVD"],
+[461,"디자인","design"],[462,"따뜻하다","warm"],[463,"따라가다","follow"],[464,"따라오다","come with, follow"],[465,"따로","separately"],
+[466,"따르다","follow"],[467,"딸","daughter"],[468,"딸기","strawberry"],[469,"땀","sweat"],[470,"때","time"],
+[471,"때문","because, for, so"],[472,"떠나다","leave"],[473,"떠들다","chatter, make a noise"],[474,"떡","rice cake"],[475,"떡국","rice cake soup"],
+[476,"떡볶이","Tteokbokki"],[477,"떨어지다","drop"],[478,"또","in addition, again"],[479,"또는","or"],[480,"똑같다","same"],
+[481,"똑바로","upright, straight"],[482,"뛰다","run"],[483,"뜨겁다","hot"],[484,"뜨다","rise, open (the eyes)"],[485,"뜻","meaning"],
+[486,"라디오","radio"],[487,"라면","ramen"],[488,"러시아","Russia"],[489,"로션","skin lotion"],[490,"마늘","garlic"],
+[491,"마르다","dry"],[492,"마리","animal(s), head(s)"],[493,"마시다","drink"],[494,"마음","mind, feeling"],[495,"마지막","last"],
+[496,"마치다","finish, end"],[497,"마흔","40"],[498,"막히다","be blocked, be clogged"],[499,"만","only, ten thousand"],[500,"만나다","meet"],
+[501,"만두","dumpling"],[502,"만들다","make, create"],[503,"만일","if, should"],[504,"만지다","touch"],[505,"만화","comic book, cartoon"],
+[506,"많다","many"],[507,"많이","a lot of, many"],[508,"말","word, talk"],[509,"말씀","words, remarks"],[510,"말씀하다","talk"],
+[511,"말하기","speaking"],[512,"말하다","say, talk"],[513,"맑다","clear, clean"],[514,"맛","flavor, taste"],[515,"맛없다","not delicious"],
+[516,"맛있다","delicious"],[517,"맞다","right, fit, correct"],[518,"맞습니다","That's right."],[519,"맞아요","That's right."],[520,"맞은편","across, the other side, opposite"],
+[521,"매다","tie"],[522,"매우","extremely, very"],[523,"매일","everyday"],[524,"매주","every week"],[525,"맥주","beer"],
+[526,"맵다","spicy"],[527,"머리","head, hair"],[528,"먹다","eat"],[529,"먼저","first, first of all, before"],[530,"멀다","far, distant, long"],
+[531,"멋있다","cool, nice"],[532,"메뉴","menu"],[533,"메다","shoulder, carry"],[534,"메모","memo"],[535,"메시지","message"],
+[536,"멕시코","Mexico"],[537,"며칠","a few days, what date"],[538,"면도","razor, shaving"],[539,"명","person(s)"],[540,"명절","holidays, annual events"],
+[541,"몇","a few, a number of"],[542,"모두","all, everyone"],[543,"모레","the day after tomorrow"],[544,"모르겠습니다","I don't know."],[545,"모르다","do not know"],
+[546,"모시다","take you, serve you (honorific)"],[547,"모양","shape, form, style"],[548,"모으다","collect, gather"],[549,"모이다","gather, get together"],[550,"모임","meeting, gathering"],
+[551,"모자","hat"],[552,"목","neck, throat"],[553,"목걸이","necklace"],[554,"목소리","voice"],[555,"목요일","Thursday"],
+[556,"목욕","bath, bathing"],[557,"목욕하다","take a bath"],[558,"목적","purpose"],[559,"몸","body"],[560,"몸살","sickness, disease from fatigue"],
+[561,"못하다","cannot do"],[562,"몽골","Mongolia"],[563,"무","radish"],[564,"무겁다","heavy"],[565,"무궁화","rose of sharon"],
+[566,"무료","free"],[567,"무릎","knee"],[568,"무리","swarm, unreasonable"],[569,"무섭다","scary"],[570,"무슨","what"],
+[571,"무엇","what"],[572,"무엇이","what"],[573,"무역","trade"],[574,"무용","dance"],[575,"무척","very"],
+[576,"문","door, gate"],[577,"문구점","stationery store"],[578,"문장","sentence"],[579,"문제","problem"],[580,"문화","culture"],
+[581,"묻다","ask"],[582,"물","water"],[583,"물건","stuff, thing"],[584,"물론","sure, of course"],[585,"물어보다","ask"],
+[586,"뭐","what"],[587,"미국","The United States"],[588,"미래","future"],[589,"미리","in advance, beforehand"],[590,"미술","art"],
+[591,"미술관","art gallery, art museum"],[592,"미안하다","sorry"],[593,"미안합니다","I'm sorry."],[594,"미용실","beauty salon"],[595,"미터","meter"],
+[596,"민속촌","folk village"],[597,"밀가루","flour"],[598,"밀리다","be shaved, be pushed"],[599,"밑","bottom, below"],[600,"바꾸다","change"],
+[601,"바뀌다","be changed"],[602,"바나나","banana"],[603,"바다","sea"],[604,"바닷가","beach"],[605,"바라다","hope"],
+[606,"바람","wind"],[607,"바로","immediately, soon, just"],[608,"바르다","right, paint, wear"],[609,"바쁘다","busy"],[610,"바이올린","violin"],
+[611,"바지","pants"],[612,"박물관","museum"],[613,"박수","clap, applause"],[614,"밖","out, outside"],[615,"반","half, group"],
+[616,"반갑다","nice to meet, happy"],[617,"반갑습니다","Nice to meet you."],[618,"반년","half a year"],[619,"반달","half-moon"],[620,"반바지","shorts"],
+[621,"반지","ring"],[622,"반찬","side dish"],[623,"받다","receive"],[624,"발","foot, leg"],[625,"발가락","toe(s)"],
+[626,"발음","pronunciation"],[627,"발전","development"],[628,"발표","announcement, presentation"],[629,"밝다","bright"],[630,"밤","night"],
+[631,"밥","rice, meal"],[632,"방","room"],[633,"방법","way, method"],[634,"방송","broadcast"],[635,"방송국","broadcast stations"],
+[636,"방학","vacation"],[637,"배","ship, stomach, pear"],[638,"배고프다","hungry"],[639,"배구","volleyball"],[640,"배달","delivery"],
+[641,"배부르다","be full"],[642,"배우","actor"],[643,"배우다","learn"],[644,"배탈","stomachache"],[645,"백","100"],
+[646,"백화점","department store"],[647,"버리다","abandon, throw away"],[648,"버스","bus"],[649,"번","time(s)"],[650,"번호","number"],
+[651,"벌다","earn, make money"],[652,"벌써","already"],[653,"벗다","take off (clothes, shoes)"],[654,"벚꽃","cherry blossom"],[655,"베이징","Beijing"],
+[656,"베트남","Vietnam"],[657,"벽","wall"],[658,"변호사","lawyer"],[659,"별","star"],[660,"별로","not really"],
+[661,"병","illness, bottle(s)"],[662,"병원","hospital"],[663,"보내다","send, spend"],[664,"보다","see"],[665,"보도","sidewalk, report"],
+[666,"보이다","show, look"],[667,"보통","usually, normally, in general"],[668,"복숭아","peach"],[669,"복잡하다","complicated, crowded"],[670,"볶다","fry"],
+[671,"볶음밥","fried rice"],[672,"볼펜","ballpoint pen"],[673,"봄","spring"],[674,"봉지","bag"],[675,"봉투","envelope"],
+[676,"뵙다","meet"],[677,"부동산","real estate"],[678,"부드럽다","soft, friendly"],[679,"부르다","call, sing"],[680,"부모","parents"],
+[681,"부부","couple, husband and wife"],[682,"부산","Busan"],[683,"부업","sideline"],[684,"부엌","kitchen"],[685,"부인","wife, Mrs."],
+[686,"부장","director"],[687,"부지런하다","diligent"],[688,"부치다","send, fry, transmit"],[689,"부탁","request, please"],[690,"부탁하다","beg, ask"],
+[691,"북쪽","North"],[692,"분","person(s), minute(s)"],[693,"분위기","atmosphere, mood"],[694,"불","fire, electrical light"],[695,"불고기","Bulgogi, grilled meat"],
+[696,"불다","blow (wind, whistle, etc.)"],[697,"불편하다","uncomfortable, inconvenient"],[698,"붓다","pour"],[699,"붙다","stick, pass a test"],[700,"붙이다","attach, stick"],
+[701,"브라질","Brazil"],[702,"블라우스","blouse"],[703,"비","rain"],[704,"비누","soap"],[705,"비디오","video"],
+[706,"비밀","secret"],[707,"비빔밥","Bibimbap, mixed rice"],[708,"비슷하다","similar, like"],[709,"비싸다","expensive"],[710,"비행기","airplane"],
+[711,"비행장","airfield, airport"],[712,"빌딩","building"],[713,"빌리다","borrow, lend"],[714,"빠르다","fast"],[715,"빨간색","red color"],
+[716,"빨갛다","red"],[717,"빨다","suck, do laundry"],[718,"빨래","laundry, wash"],[719,"빨리","quickly"],[720,"빵","bread"],
+[721,"빵집","bakery"],[722,"빼다","remove, pull, pull out"],[723,"뿐","only"],[724,"사","4"],[725,"사거리","intersection, four corners"],
+[726,"사계절","four seasons"],[727,"사고","accident"],[728,"사과","apple"],[729,"사다","buy"],[730,"사람","person, man"],
+[731,"사랑","love"],[732,"사랑하다","love"],[733,"사례","case, example"],[734,"사무실","office"],[735,"사물","object, thing"],
+[736,"사십","40"],[737,"사업가","entrepreneur, businessman"],[738,"사용하다","use"],[739,"사원","temple, employee"],[740,"사월","April"],
+[741,"사이","between, while"],[742,"사이다","cider"],[743,"사이즈","size"],[744,"사인하다","sign"],[745,"사장","CEO, the president"],
+[746,"사전","dictionary"],[747,"사진","picture, photo"],[748,"사진기","camera"],[749,"사촌","cousin"],[750,"사탕","candy"],
+[751,"사흘","3 days"],[752,"산","mountain"],[753,"산책","walk"],[754,"살","flesh, year(s) old"],[755,"살다","live"],
+[756,"삼","3"],[757,"삼거리","intersection, three-way"],[758,"삼계탕","Samgyetang"],[759,"삼십","30"],[760,"삼월","March"],
+[761,"삼촌","paternal uncle"],[762,"상관","relation"],[763,"상자","box"],[764,"상처","wound, scratch"],[765,"상품","product"],
+[766,"새","bird, new"],[767,"새로","newly"],[768,"새벽","dawn, late at night, early morning"],[769,"새우","shrimp"],[770,"색","color"],
+[771,"색깔","color"],[772,"샌드위치","sandwich"],[773,"생각","thinking, thought"],[774,"생각되다","be considered, it seems"],[775,"생각하다","think"],
+[776,"생기다","form, arise"],[777,"생선","fish"],[778,"생신","birthday (honorific)"],[779,"생일","birthday"],[780,"생활","life"],
+[781,"샤워하다","take a shower"],[782,"샴푸","shampoo"],[783,"서다","stand"],[784,"서로","each other, both"],[785,"서류","document"],
+[786,"서른","30"],[787,"서비스","service"],[788,"서양","western, west"],[789,"서울","Seoul"],[790,"서울역","Seoul station"],
+[791,"서점","bookstore"],[792,"서쪽","west, western"],[793,"선물","gift, present"],[794,"선배","elder, senior"],[795,"선생님","teacher"],
+[796,"선수","player"],[797,"선택하다","choose, select"],[798,"선풍기","fan"],[799,"설거지","washing dishes"],[800,"설날","Lunar New Year"],
+[801,"설렁탕","Seolleongtang"],[802,"설명","explanation, description"],[803,"설명하다","explain"],[804,"설악산","Mt. Seorak"],[805,"설탕","sugar"],
+[806,"섬","island"],[807,"성","castle, last name"],[808,"성격","personality"],[809,"성함","name"],[810,"세계","world"],
+[811,"세수하다","wash"],[812,"세우다","set up, formulate"],[813,"세일하다","have a sale"],[814,"세탁기","washing machine"],[815,"세탁소","dry cleaners, laundromat"],
+[816,"센터","center"],[817,"센티미터","centimeter"],[818,"셋","3"],[819,"셋째","third"],[820,"소","small, cow"],
+[821,"소개","introduction"],[822,"소개하다","introduce"],[823,"소고기","beef"],[824,"소금","salt"],[825,"소리","sound, voice"],
+[826,"소설","novel"],[827,"소설가","novelist"],[828,"소식","news"],[829,"소파","sofa"],[830,"소포","parcel"],
+[831,"소풍","picnic, trip"],[832,"소화제","peptic, digestive"],[833,"속","inside"],[834,"손","hand"],[835,"손가락","finger"],
+[836,"손님","customer"],[837,"손수건","handkerchief"],[838,"송이","bunch, flower, cluster"],[839,"쇼핑","shopping"],[840,"수건","towel, washcloth"],
+[841,"수도","capital, water supply"],[842,"수돗물","tap water"],[843,"수박","watermelon"],[844,"수술하다","operate on"],[845,"수업","class, lesson"],
+[846,"수영","swimming"],[847,"수영복","swimsuit"],[848,"수영장","swimming pool"],[849,"수요일","Wednesday"],[850,"수저","chopsticks and a spoon"],
+[851,"수첩","note, notebook"],[852,"수학","mathematics"],[853,"숙제","homework"],[854,"순서","order, turn"],[855,"숟가락","spoon"],
+[856,"술","alcohol, liquor"],[857,"쉬다","rest"],[858,"쉰","50"],[859,"쉽다","easy"],[860,"슈퍼마켓","supermarket"],
+[861,"스물","20"],[862,"스웨터","sweater"],[863,"스케이트","skate"],[864,"스키","ski, skiing"],[865,"스키장","ski resort"],
+[866,"스타","star"],[867,"스타킹","stockings"],[868,"스트레스","stress"],[869,"스페인어","Spanish"],[870,"스포츠","sport"],
+[871,"슬퍼하다","sorrow, mourn"],[872,"슬프다","sad"],[873,"습관","habit"],[874,"시","city, time"],[875,"시간","time"],
+[876,"시간표","schedule, timetable"],[877,"시계","clock"],[878,"시골","countryside"],[879,"시끄럽다","noisy"],[880,"시내","downtown, city, stream"],
+[881,"시다","sour"],[882,"시디","CD"],[883,"시민","citizen"],[884,"시설","facility"],[885,"시외","suburbs"],
+[886,"시원하다","cool, refresh"],[887,"시월","October"],[888,"시작","start"],[889,"시작되다","begin"],[890,"시작하다","start, begin"],
+[891,"시장","market"],[892,"시청","city hall"],[893,"시키다","make someone do, order"],[894,"시험","exam, test"],[895,"식당","restaurant, cafeteria"],
+[896,"식사","meal"],[897,"식탁","table"],[898,"신","god, new"],[899,"신다","put on, wear"],[900,"신문","newspaper"],
+[901,"신발","shoes, footwear"],[902,"신청서","application forms"],[903,"신청하다","put in for, apply for"],[904,"실례","excuse"],[905,"실례하다","be excused"],
+[906,"실수","mistake, failure"],[907,"싫다","hate"],[908,"싫어하다","dislike, hate"],[909,"심하다","severe, terrible"],[910,"십","10"],
+[911,"십이월","December"],[912,"십일월","November"],[913,"싱겁다","not salty"],[914,"싶다","want"],[915,"싸다","cheap, wrap"],
+[916,"싸우다","fight"],[917,"쌀","rice"],[918,"쌀밥","cooked rice"],[919,"쌓이다","stack up, pile up"],[920,"썰다","chop, cut"],
+[921,"쓰기","writing, dictation"],[922,"쓰다","write, use, wear (glasses)"],[923,"쓰레기","garbage"],[924,"쓰이다","be written, be used"],[925,"씨","seed, Mr."],
+[926,"씩","each, every, per"],[927,"씹다","chew, bite"],[928,"씻다","wash"],[929,"아가씨","Miss, daughter"],[930,"아기","baby, toddler"],
+[931,"아까","earlier, while ago"],[932,"아내","wife"],[933,"아뇨","no"],[934,"아니다","no"],[935,"아니오","no"],
+[936,"아니요","no"],[937,"아들","son"],[938,"아랍어","Arabic"],[939,"아래","bottom, under"],[940,"아름답다","beautiful"],
+[941,"아마","maybe, perhaps"],[942,"아무","any"],[943,"아버님","father"],[944,"아버지","father"],[945,"아빠","dad"],
+[946,"아시아","Asia"],[947,"아이","child"],[948,"아이스크림","ice cream"],[949,"아저씨","uncle, mister"],[950,"아주","very, completely"],
+[951,"아주머니","old lady, madame, aunt"],[952,"아줌마","old lady, madame, aunt"],[953,"아직","yet, still"],[954,"아침","morning, breakfast"],[955,"아침밥","breakfast"],
+[956,"아침식사","breakfast"],[957,"아파트","apartment, mansion"],[958,"아프다","painful, sick"],[959,"아프리카","Africa"],[960,"아홉","9"],
+[961,"아흔","90"],[962,"악기","musical instrument"],[963,"안","within, not"],[964,"안경","glasses"],[965,"안내하다","guide, invite"],
+[966,"안녕하세요","hi, hello"],[967,"안녕하십니까","hello"],[968,"안다","embrace, cradle"],[969,"안전하다","safe"],[970,"앉다","sit"],
+[971,"알다","know"],[972,"알리다","inform"],[973,"알맞다","fit, appropriate"],[974,"알았습니다","I understood."],[975,"앞","front, previous"],
+[976,"애","child"],[977,"액세서리","accessory"],[978,"야구","baseball"],[979,"야채","vegetable"],[980,"약","about, medicine"],
+[981,"약간","slightly, a little"],[982,"약국","pharmacy"],[983,"약사","pharmacist"],[984,"약속","appointment, promise"],[985,"얇다","thin"],
+[986,"양","amount, sheep"],[987,"양말","socks"],[988,"양복","suit"],[989,"양식","form, western style"],[990,"양파","onion"],
+[991,"얘기하다","talk"],[992,"어깨","shoulder"],[993,"어느","which, how"],[994,"어둡다","dark"],[995,"어디","where"],
+[996,"어떤","which, what"],[997,"어떻게","how"],[998,"어떻다","how"],[999,"어떻습니까?","How is it?"],[1000,"어렵다","difficult"],
+[1001,"어른","adult"],[1002,"어리다","young"],[1003,"어린이","child"],[1004,"어머","oh, well"],[1005,"어머니","mother"],
+[1006,"어머님","mother"],[1007,"어서","hurry, quickly"],[1008,"어울리다","look good on, befit"],[1009,"어저께","yesterday"],[1010,"어제","yesterday"],
+[1011,"어젯밤","last night"],[1012,"언니","sister (as seen from the younger sister)"],[1013,"언제","when"],[1014,"언제나","always, anytime"],[1015,"얼굴","face"],
+[1016,"얼마나","how much"],[1017,"얼음","ice"],[1018,"엄마","mom"],[1019,"없다","none, no, not"],[1020,"없이","without"],
+[1021,"에어컨","air conditioner"],[1022,"엔","yen"],[1023,"엘리베이터","elevator"],[1024,"여권","passport"],[1025,"여기","here"],
+[1026,"여기저기","here and there"],[1027,"여덟","8"],[1028,"여동생","younger sister"],[1029,"여든","80"],[1030,"여러","various, many"],
+[1031,"여러가지","several, various"],[1032,"여러분","everyone, ladies and gentlemen"],[1033,"여름","summer"],[1034,"여보세요","hello"],[1035,"여섯","6"],
+[1036,"여자","woman"],[1037,"여학생","female student"],[1038,"여행","travel"],[1039,"여행사","travel agency"],[1040,"역","station"],
+[1041,"역사","history"],[1042,"연락처","contact information"],[1043,"연세","age (honorific)"],[1044,"연습","practice"],[1045,"연습하다","practice"],
+[1046,"연예인","celebrity"],[1047,"연필","pencil"],[1048,"연휴","consecutive holidays"],[1049,"열","10"],[1050,"열다","open"],
+[1051,"열리다","be opened"],[1052,"열쇠","key"],[1053,"열심히","hard, enthusiastic"],[1054,"열차","train"],[1055,"엽서","postcard"],
+[1056,"영","spirit, zero"],[1057,"영국","The United Kingdom"],[1058,"영상","video"],[1059,"영어","English"],[1060,"영어회화","English conversation"],
+[1061,"영하","minus, below zero"],[1062,"영화","movie"],[1063,"영화관","movie theater"],[1064,"영화배우","movie star"],[1065,"영화표","movie ticket"],
+[1066,"옆","side"],[1067,"예","yes"],[1068,"예문","example, model sentence"],[1069,"예쁘다","pretty, beautiful"],[1070,"예순","60"],
+[1071,"예약","reservation"],[1072,"옛날","a long ago, olden days"],[1073,"오","5"],[1074,"오늘","today"],[1075,"오다","come"],
+[1076,"오래","long, much"],[1077,"오래간만","after a long time"],[1078,"오래간만입니다","Long time no see."],[1079,"오랜만","after a long time"],[1080,"오랜만에","after a long time"],
+[1081,"오랫동안","for a long time"],[1082,"오렌지","orange"],[1083,"오르다","climb"],[1084,"오른쪽","right side, right"],[1085,"오리","duck"],
+[1086,"오빠","brother (as seen from the younger sister)"],[1087,"오십","50"],[1088,"오월","May"],[1089,"오이","cucumber"],[1090,"오전","morning, a.m."],
+[1091,"오징어","squid"],[1092,"오후","afternoon"],[1093,"올라가다","go up"],[1094,"올라오다","come up"],[1095,"올려놓다","put on, place"],
+[1096,"올림픽","olympic"],[1097,"올해","this year"],[1098,"옮기다","move, transfer, translate"],[1099,"옷","dress, clothes"],[1100,"옷가게","clothing store"],
+[1101,"옷장","closet"],[1102,"와이셔츠","shirt"],[1103,"왜","why"],[1104,"왜냐하면","because"],[1105,"외국","foreign country"],
+[1106,"외국어","foreign language"],[1107,"외국인","foreigner"],[1108,"외롭다","lonely"],[1109,"외삼촌","maternal uncle"],[1110,"외숙모","maternal aunt"],
+[1111,"외출하다","go out"],[1112,"외할머니","maternal grandmother"],[1113,"외할아버지","maternal grandfather"],[1114,"왼쪽","left"],[1115,"요금","fee"],
+[1116,"요르단","Jordan"],[1117,"요리","cooking, cuisine"],[1118,"요일","day of the week"],[1119,"요즘","nowadays, around this time, lately"],[1120,"우리","we, us"],
+[1121,"우리나라","our country, South Korea"],[1122,"우산","umbrella"],[1123,"우선","first"],[1124,"우유","milk"],[1125,"우체국","post office"],
+[1126,"우표","stamp"],[1127,"운동","exercise"],[1128,"운동복","sportswear, gym clothes"],[1129,"운동선수","athlete"],[1130,"운동장","playground, athletic field"],
+[1131,"운동하다","exercise"],[1132,"운동화","sports shoes"],[1133,"운전하다","drive"],[1134,"울다","cry"],[1135,"울리다","make cry, chime"],
+[1136,"움직이다","move"],[1137,"웃기다","funny, make someone laugh"],[1138,"웃다","laugh"],[1139,"원","won (Korean currency)"],[1140,"원피스","one-piece dress"],
+[1141,"원하다","want, wish, desire"],[1142,"월","month"],[1143,"월급","monthly salary"],[1144,"월드컵","world cup"],[1145,"월세","monthly rent"],
+[1146,"월요일","Monday"],[1147,"웬일","for some reason, What was it?"],[1148,"위","top, up"],[1149,"위치","location, position"],[1150,"위하다","for, in favor of"],
+[1151,"위험하다","dangerous"],[1152,"유럽","Europe"],[1153,"유리","glass"],[1154,"유명하다","famous"],[1155,"유월","June"],
+[1156,"유학","study abroad"],[1157,"유학생","foreign student, international student"],[1158,"유행","trend"],[1159,"육","6"],[1160,"육십","60"],
+[1161,"은행","bank"],[1162,"은행원","bank clerk"],[1163,"음료수","drink, soft drink"],[1164,"음반","record"],[1165,"음식","food, cooking"],
+[1166,"음악","music"],[1167,"음악가","musician"],[1168,"응","Yeah (answer)"],[1169,"의미","meaning"],[1170,"의사","doctor"],
+[1171,"의자","chair"],[1172,"이","this, tooth, 2"],[1173,"이거","this"],[1174,"이것","this"],[1175,"이곳","this place, here"],
+[1176,"이따가","later"],[1177,"이런","this, such"],[1178,"이렇게","like this, so, in this way"],[1179,"이렇다","like this"],[1180,"이름","name"],
+[1181,"이메일","e-mail"],[1182,"이모","maternal aunt"],[1183,"이모부","maternal uncle"],[1184,"이번","this time"],[1185,"이분","this person"],
+[1186,"이사","move, moving"],[1187,"이상","more than, strange"],[1188,"이상하다","strange, funny, weird"],[1189,"이십","20"],[1190,"이야기","story"],
+[1191,"이야기하다","talk"],[1192,"이용","usage"],[1193,"이용하다","use"],[1194,"이월","February"],[1195,"이유","reason"],
+[1196,"이제","now"],[1197,"이집트","Egypt"],[1198,"이쪽","this way, here, this person"],[1199,"이틀","two days"],[1200,"이해","understanding"],
+[1201,"이해하다","understand"],[1202,"인","sign, person(s)"],[1203,"인구","population"],[1204,"인기","popularity"],[1205,"인기스타","popular star"],
+[1206,"인도","India"],[1207,"인사","greetings"],[1208,"인사하다","greet"],[1209,"인삼","ginseng"],[1210,"인상","impression"],
+[1211,"인천","Incheon"],[1212,"인터넷","internet"],[1213,"인터뷰하다","interview"],[1214,"인형","doll"],[1215,"일","work, 1, day"],
+[1216,"일곱","7"],[1217,"일기","diary"],[1218,"일기예보","weather forecast"],[1219,"일본","Japan"],[1220,"일본드라마","Japanese drama"],
+[1221,"일본말","Japanese language"],[1222,"일본사람","Japanese people"],[1223,"일본어","Japanese language"],[1224,"일본요리","Japanese food"],[1225,"일상생활","everyday life"],
+[1226,"일식","Japanese style, Japanese food"],[1227,"일어나다","rise, stand, occur"],[1228,"일어서다","get up, stand up"],[1229,"일요일","Sunday"],[1230,"일월","January"],
+[1231,"일주일","one week"],[1232,"일찍","early"],[1233,"일하다","work"],[1234,"일흔","70"],[1235,"읽기","reading"],
+[1236,"읽다","read"],[1237,"잃다","lose"],[1238,"잃어버리다","lose"],[1239,"입","mouth"],[1240,"입구","entrance"],
+[1241,"입다","put on, wear"],[1242,"입원하다","hospitalize"],[1243,"입학","admission"],[1244,"있다","have, there"],[1245,"잊다","forget"],
+[1246,"잊어버리다","forget"],[1247,"자","character, Here we go."],[1248,"자기","myself, own"],[1249,"자다","sleep"],[1250,"자동차","car, automobile"],
+[1251,"자동차회사","car company"],[1252,"자료","material, document"],[1253,"자르다","cut"],[1254,"자리","seat, location"],[1255,"자신","myself, own"],
+[1256,"자연","nature"],[1257,"자유","freedom"],[1258,"자장면","Jajangmyeon"],[1259,"자전거","bicycle"],[1260,"자주","often"],
+[1261,"작년","last year"],[1262,"작다","small"],[1263,"작은아버지","uncle"],[1264,"작은어머니","aunt"],[1265,"잔","glass, cup(s)"],
+[1266,"잔치","party, feast"],[1267,"잘","well"],[1268,"잘못","mistake"],[1269,"잘생기다","handsome"],[1270,"잘하다","do well, good at"],
+[1271,"잠","slumbers, sleep"],[1272,"잠깐","for a while, a little"],[1273,"잠시","for a bit, for a while"],[1274,"잠자다","sleep, go to bed"],[1275,"잡다","catch, grab, hold"],
+[1276,"잡수시다","eat (honorific)"],[1277,"잡지","magazine"],[1278,"장","chapter(s), sheet(s)"],[1279,"장갑","gloves"],[1280,"장마","rainy season"],
+[1281,"장마철","rainy season"],[1282,"장미","rose"],[1283,"장소","place"],[1284,"장점","advantage"],[1285,"재료","material"],
+[1286,"재미없다","not funny, uninteresting"],[1287,"재미있다","interesting"],[1288,"재킷","jacket"],[1289,"저","that"],[1290,"저거","that"],
+[1291,"저것","that"],[1292,"저곳","over there"],[1293,"저기","there, over there"],[1294,"저녁","dinner, evening, night"],[1295,"저녁식사","dinner"],
+[1296,"저렇게","like that, in that way"],[1297,"저분","that person"],[1298,"저쪽","there, over there"],[1299,"저희","we"],[1300,"적","enemy"],
+[1301,"적다","be few, write down"],[1302,"전","all, before"],[1303,"전공","major"],[1304,"전기자동차","electric car"],[1305,"전자사전","electronic dictionary"],
+[1306,"전하다","tell"],[1307,"전혀","not at all"],[1308,"전화","telephone"],[1309,"전화기","telephone"],[1310,"전화번호","phone number"],
+[1311,"절","section(s), temple"],[1312,"절대","never, absolutely"],[1313,"젊다","young"],[1314,"점","point"],[1315,"점수","score, point"],
+[1316,"점심","lunch"],[1317,"점심시간","lunchtime"],[1318,"점심식사","lunch"],[1319,"점원","clerk"],[1320,"점퍼","jacket"],
+[1321,"젓가락","chopsticks"],[1322,"정거장","station, depot"],[1323,"정도","degree"],[1324,"정류장","station, bus stop"],[1325,"정리하다","straighten out, organize"],
+[1326,"정말","really, truly"],[1327,"정문","front door, main gate"],[1328,"정보","information"],[1329,"정하다","choose, establish"],[1330,"제가","I"],
+[1331,"제목","title"],[1332,"제일","most"],[1333,"제주도","Jeju Island"],[1334,"조금","a little"],[1335,"조사하다","investigate"],
+[1336,"조선","shipbuilding, Korea"],[1337,"조선말","Korean language"],[1338,"조선어","Korean language"],[1339,"조심하다","be careful, warn"],[1340,"조용하다","silent, quiet"],
+[1341,"조용히","quietly"],[1342,"조카","nephew"],[1343,"졸업","graduation"],[1344,"졸업하다","graduate"],[1345,"좀","a little"],
+[1346,"좀더","a little more"],[1347,"좁다","narrow"],[1348,"종로","Jong-ro"],[1349,"종류","kind, type"],[1350,"종업원","employee"],
+[1351,"종이","paper"],[1352,"종일","all day"],[1353,"좋다","good"],[1354,"좋아하다","like"],[1355,"죄송하다","sorry"],
+[1356,"주","week"],[1357,"주다","give"],[1358,"주로","mainly"],[1359,"주말","weekend"],[1360,"주머니","pocket, pouch"],
+[1361,"주무시다","sleep, rest"],[1362,"주문하다","order"],[1363,"주변","around"],[1364,"주부","housewife"],[1365,"주사","injection"],
+[1366,"주소","address"],[1367,"주스","juice"],[1368,"주위","around"],[1369,"주인","owner"],[1370,"주차장","parking lot"],
+[1371,"주차하다","park"],[1372,"주황색","orange color"],[1373,"죽","bamboo, porridge"],[1374,"죽다","die"],[1375,"준비","preparation"],
+[1376,"준비하다","prepare"],[1377,"줄","line, column, string"],[1378,"줄다","shrink, decrease"],[1379,"중","medium, during"],[1380,"중국","China"],
+[1381,"중국어","Chinese"],[1382,"중국집","Chinese restaurant"],[1383,"중식","Chinese cuisine"],[1384,"중심","center"],[1385,"중요","importance"],
+[1386,"중요하다","important"],[1387,"중학교","middle school, Junior high school"],[1388,"중학생","middle school student"],[1389,"즐거워하다","have fun"],[1390,"즐겁다","fun, be pleasant"],
+[1391,"즐기다","enjoy, have fun"],[1392,"증세","symptom, medical condition"],[1393,"지각","tardy, being late"],[1394,"지갑","wallet"],[1395,"지금","now"],
+[1396,"지나다","pass by"],[1397,"지난달","last month"],[1398,"지난번","last time"],[1399,"지난주","last week"],[1400,"지내다","stay, spend, live"],
+[1401,"지다","lose"],[1402,"지도","map"],[1403,"지방","fat, region"],[1404,"지우개","eraser"],[1405,"지키다","protect"],
+[1406,"지하","underground"],[1407,"지하도","underpass"],[1408,"지하철","subway"],[1409,"지하철역","subway station"],[1410,"직업","job, profession"],
+[1411,"직원","employee, staff"],[1412,"직장","workplace"],[1413,"직접","directly, direct"],[1414,"진달래","azalea"],[1415,"질","quality"],
+[1416,"질문","question"],[1417,"질문하다","ask a question"],[1418,"짐","load, baggage"],[1419,"집","house, shop"],[1420,"짓다","build, create"],
+[1421,"짜다","salty, make (the plan)"],[1422,"짜리","a value (won coin)"],[1423,"짧다","short"],[1424,"쪽","side, page"],[1425,"쯤","about, around"],
+[1426,"찌개","stew, soup"],[1427,"찍다","pierce, take (a photo), press"],[1428,"차","car, tea"],[1429,"차갑다","cold"],[1430,"차다","kick"],
+[1431,"차리다","prepare, arrange"],[1432,"착하다","be good, friendly"],[1433,"참","really, very"],[1434,"창문","window"],[1435,"찾다","find, visit"],
+[1436,"찾아가다","go to visit"],[1437,"찾아오다","come to visit"],[1438,"채소","vegetable"],[1439,"책","book"],[1440,"책방","bookstore"],
+[1441,"책상","desk"],[1442,"책임","responsibility"],[1443,"책장","bookshelf"],[1444,"처음","first, for the first time"],[1445,"처음 뵙겠습니다","Nice to meet you."],
+[1446,"천","1000"],[1447,"천천히","slowly"],[1448,"철","iron, season"],[1449,"첫","first"],[1450,"첫째","first"],
+[1451,"청바지","blue jeans"],[1452,"청소기","vacuum cleaner"],[1453,"청소하다","sweep, clean"],[1454,"초","second(s)"],[1455,"초대하다","invite"],
+[1456,"초등학교","elementary school"],[1457,"초등학생","elementary student"],[1458,"초록색","green color"],[1459,"초콜릿","chocolate"],[1460,"촬영하다","take a picture"],
+[1461,"최고","best, the highest"],[1462,"추다","dance"],[1463,"추석","Chuseok (Korean Thanksgiving Day)"],[1464,"추억","memory"],[1465,"축구","football, soccer"],
+[1466,"축제","festival"],[1467,"축하","celebration"],[1468,"축하하다","celebrate"],[1469,"축하합니다","congratulations"],[1470,"출구","exit"],
+[1471,"출근하다","go to work"],[1472,"출발","start, departure"],[1473,"출발하다","depart"],[1474,"출장","business trip"],[1475,"춤","dance"],
+[1476,"춤추다","dance"],[1477,"춥다","cold"],[1478,"취미","hobby"],[1479,"취소하다","cancel"],[1480,"취직하다","get a job"],
+[1481,"층","layer, floor"],[1482,"치과","dentist, dentistry"],[1483,"치료하다","treat"],[1484,"치마","skirt"],[1485,"치약","toothpaste"],
+[1486,"친구","friend"],[1487,"친절하다","be kind"],[1488,"친척","relative"],[1489,"친하다","close, familiar"],[1490,"칠","7"],
+[1491,"칠십","70"],[1492,"칠월","July"],[1493,"칠판","blackboard"],[1494,"침대","bed"],[1495,"칫솔","toothbrush"],
+[1496,"카드","card"],[1497,"카레","curry"],[1498,"카메라","camera"],[1499,"카페","cafe, coffee shop"],[1500,"칼","knife, cutlery, swords"],
+[1501,"캐나다","Canada"],[1502,"커피","coffee"],[1503,"커피숍","coffee shop"],[1504,"컴퓨터","computer, PC"],[1505,"컵","cup"],
+[1506,"케이크","cake"],[1507,"켜다","turn on (the light, the power)"],[1508,"코","nose"],[1509,"코트","coat"],[1510,"코피","nosebleed"],
+[1511,"콜라","Coke"],[1512,"콧노래","humming"],[1513,"콧물","snot, nasal discharge"],[1514,"콩","bean, soy"],[1515,"크기","size"],
+[1516,"크다","big, large"],[1517,"크리스마스","Christmas"],[1518,"큰아버지","uncle"],[1519,"큰어머니","aunt"],[1520,"키","key, height"],
+[1521,"킬로그램","kilogram"],[1522,"킬로미터","kilometer"],[1523,"타다","ride, get on"],[1524,"타월","towel"],[1525,"탁구","table tennis"],
+[1526,"태국","Thailand"],[1527,"태권도","Taekwondo"],[1528,"태어나다","be born"],[1529,"태풍","typhoon"],[1530,"택시","taxi"],
+[1531,"탤런트","entertainers"],[1532,"터미널","terminal"],[1533,"테니스","tennis"],[1534,"테이블","table"],[1535,"텔레비전","TV"],
+[1536,"토마토","tomato"],[1537,"토요일","Saturday"],[1538,"통","barrel, package(s)"],[1539,"통장","bank book, passbook"],[1540,"통하다","pass, lead"],
+[1541,"퇴근하다","leave the office"],[1542,"특별히","especially"],[1543,"특징","characteristic, feature"],[1544,"특히","especially, in particular"],[1545,"틀다","turn on (the switch)"],
+[1546,"틀리다","wrong"],[1547,"티셔츠","t-shirt"],[1548,"팀","team"],[1549,"파","wave, green onion"],[1550,"파란색","blue color"],
+[1551,"파랗다","blue"],[1552,"파티","party"],[1553,"팔","8"],[1554,"팔다","sell"],[1555,"팔리다","sell, be sold"],
+[1556,"팔십","80"],[1557,"팔월","August"],[1558,"패션","fashion"],[1559,"퍼센트","percent"],[1560,"페이지","page"],
+[1561,"펜","pen"],[1562,"펴다","spread, stretch"],[1563,"편","side, episode"],[1564,"편지","letter"],[1565,"편하다","comfortable, easy, convenient"],
+[1566,"평양","Pyongyang"],[1567,"평일","weekday"],[1568,"포도","grape"],[1569,"포장","packing"],[1570,"표","table, ticket"],
+[1571,"표현","expression"],[1572,"푹","deeply"],[1573,"풀","pool, grass"],[1574,"풀다","solve"],[1575,"프랑스","France"],
+[1576,"프로그램","program"],[1577,"프린트","print"],[1578,"피","blood"],[1579,"피곤하다","tired"],[1580,"피다","bloom"],
+[1581,"피아노","piano"],[1582,"피우다","smoke, bloom"],[1583,"피자","pizza"],[1584,"필름","film"],[1585,"필요","necessity"],
+[1586,"필요하다","need"],[1587,"필통","pencil case"],[1588,"하나","1"],[1589,"하늘","sky"],[1590,"하늘색","sky blue, light blue"],
+[1591,"하다","do, say"],[1592,"하루","one day"],[1593,"하숙","boarding house, lodging house"],[1594,"하숙집","boarding house, lodging house"],[1595,"하얀색","white color"],
+[1596,"하얗다","white"],[1597,"하지만","but, however"],[1598,"학","crane"],[1599,"학교","school"],[1600,"학기","semester"],
+[1601,"학년","grade, school year"],[1602,"학생","student"],[1603,"학생증","student ID card"],[1604,"학원","academy, school"],[1605,"한","one, one of the"],
+[1606,"한강","Han River, Hangang"],[1607,"한국","Korea"],[1608,"한국드라마","Korean drama"],[1609,"한국말","Korean language"],[1610,"한국사람","Korean people"],
+[1611,"한국어","Korean language"],[1612,"한국요리","Korean cuisine"],[1613,"한글","Hangul"],[1614,"한번","once"],[1615,"한복","Hanbok, Korean traditional clothes"],
+[1616,"한식","Korean cuisine"],[1617,"한자","Chinese character"],[1618,"할머니","grandmother"],[1619,"할아버지","grandfather"],[1620,"할인","sale, discount"],
+[1621,"함께","together"],[1622,"합격","pass"],[1623,"항상","always"],[1624,"해","year, sun"],[1625,"해외","overseas"],
+[1626,"해외여행","overseas trip"],[1627,"핸드폰","cell phone, mobile phone"],[1628,"햄버거","hamburger"],[1629,"햇빛","sunshine, sunlight"],[1630,"행복","happiness"],
+[1631,"행복하다","happy"],[1632,"행사","event"],[1633,"허리","waist, hip"],[1634,"현금","cash"],[1635,"현재","now, current"],
+[1636,"형","brother (as seen from the younger brother)"],[1637,"형님","big brother (honorific)"],[1638,"형제","sibling"],[1639,"호","No."],[1640,"호랑이","tiger"],
+[1641,"호주","Australia"],[1642,"호텔","hotel"],[1643,"혼자","alone"],[1644,"홈페이지","home page"],[1645,"홍차","black tea"],
+[1646,"화","anger"],[1647,"화가","artist, painter"],[1648,"화나다","angry"],[1649,"화내다","get angry"],[1650,"화요일","Tuesday"],
+[1651,"화장실","restroom, toilet, lavatory"],[1652,"화장품","cosmetics"],[1653,"화장하다","makeup"],[1654,"확인하다","confirm, check"],[1655,"환영하다","welcome"],
+[1656,"환자","patient"],[1657,"회사","company"],[1658,"회사원","employee"],[1659,"회색","grey"],[1660,"회의","conference"],
+[1661,"횡단보도","crosswalk"],[1662,"후","after"],[1663,"후배","Junior"],[1664,"휴가","vacation, holiday"],[1665,"휴대전화","cell phone, mobile phone"],
+[1666,"휴일","holiday"],[1667,"휴지","toilet paper"],[1668,"휴지통","trash can"],[1669,"흐리다","cloudy"],[1670,"흰색","white color"],
+[1671,"힘","power"]
+];
+
+// ─────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────
+const STORAGE_KEY = 'topik1_learned_v1';
+let learned   = new Set();
+let filter    = 'all';
+let deck      = [];   // current ordered deck of V-indices
+let idx       = 0;
+let flipped   = false;
+let autoFlip  = false;
+
+// ─────────────────────────────────────────────
+// Persistence
+// ─────────────────────────────────────────────
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) learned = new Set(JSON.parse(raw));
+  } catch(e) {}
+}
+function saveProgress() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...learned]));
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────────────
+// Deck management
+// ─────────────────────────────────────────────
+function buildDeck() {
+  if (filter === 'learned')  deck = V.filter(w => learned.has(w[0]));
+  else if (filter === 'learning') deck = V.filter(w => !learned.has(w[0]));
+  else deck = [...V];
+  idx = 0;
+  flipped = false;
+}
+
+function shuffle() {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  idx = 0;
+  flipped = false;
+  render();
+}
+
+// ─────────────────────────────────────────────
+// UI helpers
+// ─────────────────────────────────────────────
+function updateStats() {
+  const total    = V.length;
+  const nLearned = learned.size;
+  const nLeft    = total - nLearned;
+  const pct      = (nLearned / total * 100).toFixed(1);
+
+  document.getElementById('progressBar').style.width  = pct + '%';
+  document.getElementById('progressText').textContent = `${nLearned} / ${total} learned (${pct}%)`;
+  document.getElementById('sTotal').textContent   = total;
+  document.getElementById('sLearned').textContent = nLearned;
+  document.getElementById('sLeft').textContent    = nLeft;
+
+  // update tab labels
+  const nLearning = total - nLearned;
+  document.getElementById('tab-all').textContent      = `All (${total})`;
+  document.getElementById('tab-learning').textContent = `Learning (${nLearning})`;
+  document.getElementById('tab-learned').textContent  = `Learned (${nLearned})`;
+}
+
+function setFilter(f) {
+  filter = f;
+  ['all','learning','learned'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t === f);
+  });
+  buildDeck();
+  render();
+}
+
+function render() {
+  updateStats();
+
+  const cardArea  = document.getElementById('cardArea');
+  const emptyArea = document.getElementById('emptyArea');
+
+  if (deck.length === 0) {
+    cardArea.style.display  = 'none';
+    emptyArea.style.display = 'block';
+    const msgs = {
+      all:      { emo:'🤔', msg:'No cards found.' },
+      learning: { emo:'🎉', msg:'You have learned all the words! Amazing!' },
+      learned:  { emo:'📭', msg:'No learned words yet. Start studying!' }
+    };
+    document.getElementById('emptyEmo').textContent = msgs[filter].emo;
+    document.getElementById('emptyMsg').textContent = msgs[filter].msg;
+    return;
+  }
+
+  cardArea.style.display  = 'block';
+  emptyArea.style.display = 'none';
+
+  const word = deck[idx];
+  const isLearned = learned.has(word[0]);
+
+  document.getElementById('counter').textContent = `Card ${idx + 1} of ${deck.length}`;
+
+  document.getElementById('cNum').textContent    = `#${word[0]}`;
+  document.getElementById('cNumB').textContent   = `#${word[0]}`;
+  document.getElementById('cKorean').textContent = word[1];
+  document.getElementById('cEnglish').textContent= word[2];
+  document.getElementById('cKoreanB').textContent= word[1];
+  document.getElementById('cBadge').style.display = isLearned ? 'block' : 'none';
+
+  // card flip state
+  const cardEl = document.getElementById('card');
+  if (flipped) cardEl.classList.add('flipped');
+  else         cardEl.classList.remove('flipped');
+
+  // auto-flip
+  if (autoFlip && !flipped) {
+    setTimeout(() => {
+      if (!flipped) { flipped = true; document.getElementById('card').classList.add('flipped'); }
+    }, 1500);
+  }
+}
+
+// ─────────────────────────────────────────────
+// Actions
+// ─────────────────────────────────────────────
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+}
+
+function markCard(know) {
+  const word = deck[idx];
+  if (know) learned.add(word[0]);
+  else      learned.delete(word[0]);
+  saveProgress();
+  // If in 'learning' filter and marked as learned → remove from deck
+  if (know && filter === 'learning') {
+    deck.splice(idx, 1);
+    if (deck.length === 0) { render(); return; }
+    if (idx >= deck.length) idx = deck.length - 1;
+    flipped = false;
+    render();
+    return;
+  }
+  // If in 'learned' filter and marked not learned → remove from deck
+  if (!know && filter === 'learned') {
+    deck.splice(idx, 1);
+    if (deck.length === 0) { render(); return; }
+    if (idx >= deck.length) idx = deck.length - 1;
+    flipped = false;
+    render();
+    return;
+  }
+  // Otherwise just advance
+  flipped = false;
+  go(1);
+}
+
+function go(dir) {
+  if (deck.length === 0) return;
+  idx = (idx + dir + deck.length) % deck.length;
+  flipped = false;
+  render();
+}
+
+function resetProgress() {
+  if (!confirm(`Reset all progress? This will clear all ${learned.size} learned words.`)) return;
+  learned.clear();
+  saveProgress();
+  buildDeck();
+  render();
+}
+
+function toggleAutoFlip() {
+  autoFlip = !autoFlip;
+  const btn = document.getElementById('btnAutoFlip');
+  btn.textContent = `Auto-flip: ${autoFlip ? 'On' : 'Off'}`;
+  btn.classList.toggle('on', autoFlip);
+  if (autoFlip && !flipped) {
+    setTimeout(() => {
+      if (!flipped) { flipped = true; document.getElementById('card').classList.add('flipped'); }
+    }, 1500);
+  }
+}
+
+// ─────────────────────────────────────────────
+// Page switching
+// ─────────────────────────────────────────────
+let currentPage = 'cards';
+
+function switchPage(page) {
+  currentPage = page;
+
+  // toggle page nav buttons
+  document.getElementById('nav-cards').classList.toggle('active', page === 'cards');
+  document.getElementById('nav-list').classList.toggle('active',  page === 'list');
+
+  // show/hide sections
+  const cardsEls = [
+    document.querySelector('header'),
+    document.querySelector('.stats-row'),
+    document.querySelector('.tabs'),
+    document.getElementById('counter'),
+    document.getElementById('cardArea'),
+    document.getElementById('emptyArea'),
+    document.querySelector('.options'),
+  ];
+  cardsEls.forEach(el => { if (el) el.style.display = page === 'cards' ? '' : 'none'; });
+
+  document.getElementById('listPage').style.display = page === 'list' ? 'block' : 'none';
+
+  if (page === 'list') renderList();
+}
+
+// ─────────────────────────────────────────────
+// Word List  (pre-built DOM, filter-in-place)
+// ─────────────────────────────────────────────
+let listFilter      = 'all';
+let listQuery       = '';
+let listLayout      = 'list';
+let listInitialized = false;
+let listRows        = [];   // [{el, toggle, id, kor, eng}]
+
+function setListFilter(f) {
+  listFilter = f;
+  ['all','learning','learned'].forEach(t =>
+    document.getElementById('lf-'+t).classList.toggle('active', t === f)
+  );
+  document.getElementById('lf-learning').style.cssText = f === 'learning'
+    ? 'background:#ef4444;color:#fff;border-color:#ef4444' : '';
+  document.getElementById('lf-learned').style.cssText = f === 'learned'
+    ? 'background:#10b981;color:#fff;border-color:#10b981' : '';
+  renderList();
+}
+
+function onListSearch(val) {
+  listQuery = val.trim().toLowerCase();
+  document.getElementById('searchClear').style.display = val ? 'flex' : 'none';
+  renderList();
+}
+
+function clearSearch() {
+  document.getElementById('listSearch').value = '';
+  onListSearch('');
+  document.getElementById('listSearch').focus();
+}
+
+function toggleWordLearned(id, e) {
+  if (e) e.stopPropagation();
+  if (learned.has(id)) learned.delete(id);
+  else                  learned.add(id);
+  saveProgress();
+  updateStats();
+  // Update only the affected row — no full re-render
+  const row = listRows.find(r => r.id === id);
+  if (row) {
+    const isL = learned.has(id);
+    row.el.classList.toggle('is-learned', isL);
+    row.toggle.className   = 'wr-toggle' + (isL ? ' known' : '');
+    row.toggle.textContent = isL ? '✓' : '○';
+    // If filter is exclusive, hide/show just this row
+    if (listFilter !== 'all') {
+      const keep = (listFilter === 'learned') === isL;
+      row.el.style.display = keep ? '' : 'none';
+      _updateCount();
+    }
+  }
+}
+
+function studyWord(id) {
+  switchPage('cards');
+  filter = 'all';
+  ['all','learning','learned'].forEach(t =>
+    document.getElementById('tab-'+t).classList.toggle('active', t === 'all')
+  );
+  buildDeck();
+  idx = deck.findIndex(w => w[0] === id);
+  if (idx < 0) idx = 0;
+  flipped = false;
+  render();
+}
+
+function setLayout(l) {
+  listLayout = l;
+  localStorage.setItem('topik1_layout', l);
+  ['list','compact','grid'].forEach(t =>
+    document.getElementById('layout-'+t).classList.toggle('active', t === l)
+  );
+  document.getElementById('wordList').className = 'word-list layout-' + l;
+}
+
+function _buildWordListDOM() {
+  const container = document.getElementById('wordList');
+  const frag = document.createDocumentFragment();
+  listRows = V.map(w => {
+    const el = document.createElement('div');
+    el.className = 'word-row';
+
+    const num = document.createElement('span');
+    num.className = 'wr-num';
+    num.textContent = '#' + w[0];
+
+    const body = document.createElement('div');
+    body.className = 'wr-body';
+    const kor = document.createElement('div');
+    kor.className = 'wr-kor';
+    kor.textContent = w[1];
+    const eng = document.createElement('div');
+    eng.className = 'wr-eng';
+    eng.textContent = w[2];
+    body.append(kor, eng);
+
+    const toggle = document.createElement('button');
+    toggle.className = 'wr-toggle';
+    toggle.textContent = '○';
+    toggle.addEventListener('click', e => toggleWordLearned(w[0], e));
+
+    el.append(num, body, toggle);
+    el.addEventListener('click', () => openModal(w[0]));
+    frag.appendChild(el);
+    return { el, toggle, id: w[0], kor: w[1].toLowerCase(), eng: w[2].toLowerCase() };
+  });
+  container.appendChild(frag);
+}
+
+function _applyFilters() {
+  let count = 0;
+  for (const row of listRows) {
+    const isL = learned.has(row.id);
+    row.el.classList.toggle('is-learned', isL);
+    row.toggle.className   = 'wr-toggle' + (isL ? ' known' : '');
+    row.toggle.textContent = isL ? '✓' : '○';
+    const matchF = listFilter === 'all' ||
+                   (listFilter === 'learned'  && isL) ||
+                   (listFilter === 'learning' && !isL);
+    const matchS = !listQuery || row.kor.includes(listQuery) || row.eng.includes(listQuery);
+    const show   = matchF && matchS;
+    row.el.style.display = show ? '' : 'none';
+    if (show) count++;
+  }
+  document.getElementById('listInfo').textContent = count + ' word' + (count !== 1 ? 's' : '');
+}
+
+function _updateCount() {
+  let count = 0;
+  for (const row of listRows) if (row.el.style.display !== 'none') count++;
+  document.getElementById('listInfo').textContent = count + ' word' + (count !== 1 ? 's' : '');
+}
+
+function renderList() {
+  if (!listInitialized) {
+    _buildWordListDOM();
+    listInitialized = true;
+    const saved = localStorage.getItem('topik1_layout');
+    if (saved) setLayout(saved);
+  }
+  _applyFilters();
+}
+
+// ─────────────────────────────────────────────
+// Word detail modal
+// ─────────────────────────────────────────────
+let modalIds     = [];  // visible word IDs in current filtered list order
+let modalIdx2    = 0;
+let modalFlipped = false;
+
+function openModal(id) {
+  // Capture visible rows in their current DOM order
+  modalIds = listRows.filter(r => r.el.style.display !== 'none').map(r => r.id);
+  if (modalIds.length === 0) return;
+  modalIdx2    = Math.max(0, modalIds.indexOf(id));
+  modalFlipped = false;
+  _renderModal();
+  document.getElementById('modalOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function modalFlip() {
+  modalFlipped = !modalFlipped;
+  document.getElementById('modalCard').classList.toggle('flipped', modalFlipped);
+}
+
+function modalGo(dir) {
+  modalIdx2    = (modalIdx2 + dir + modalIds.length) % modalIds.length;
+  modalFlipped = false;
+  _renderModal();
+}
+
+function modalMark(know) {
+  const id = modalIds[modalIdx2];
+  if (know) learned.add(id);
+  else      learned.delete(id);
+  saveProgress();
+  updateStats();
+  // Sync the row in the list
+  const row = listRows.find(r => r.id === id);
+  if (row) {
+    row.el.classList.toggle('is-learned', know);
+    row.toggle.className   = 'wr-toggle' + (know ? ' known' : '');
+    row.toggle.textContent = know ? '✓' : '○';
+    if (listFilter !== 'all') {
+      const keep = (listFilter === 'learned') === know;
+      if (!keep) {
+        // Remove from modal sequence and advance
+        modalIds.splice(modalIdx2, 1);
+        row.el.style.display = 'none';
+        _updateCount();
+        if (modalIds.length === 0) { closeModal(); return; }
+        if (modalIdx2 >= modalIds.length) modalIdx2 = modalIds.length - 1;
+        modalFlipped = false;
+        _renderModal();
+        return;
+      }
+    }
+  }
+  _renderModal();
+  // Auto-advance after marking known
+  if (know) setTimeout(() => modalGo(1), 400);
+}
+
+function _renderModal() {
+  const id   = modalIds[modalIdx2];
+  const word = V.find(w => w[0] === id);
+  if (!word) return;
+  const isL = learned.has(id);
+  document.getElementById('modalNum').textContent    = '#' + word[0];
+  document.getElementById('modalNumB').textContent   = '#' + word[0];
+  document.getElementById('modalKorean').textContent = word[1];
+  document.getElementById('modalEnglish').textContent= word[2];
+  document.getElementById('modalKorSm').textContent  = word[1];
+  document.getElementById('modalBadge').style.display = isL ? 'block' : 'none';
+  document.getElementById('modalCounter').textContent =
+    (modalIdx2 + 1) + ' / ' + modalIds.length;
+  document.getElementById('modalCard').classList.toggle('flipped', modalFlipped);
+}
+
+// ─────────────────────────────────────────────
+// Dark mode
+// ─────────────────────────────────────────────
+function toggleDarkMode() {
+  const isDark = document.documentElement.hasAttribute('data-dark');
+  if (isDark) {
+    document.documentElement.removeAttribute('data-dark');
+    document.getElementById('darkToggle').textContent = '🌙';
+    localStorage.removeItem('topik1_dark');
+  } else {
+    document.documentElement.setAttribute('data-dark', '');
+    document.getElementById('darkToggle').textContent = '☀️';
+    localStorage.setItem('topik1_dark', '1');
+  }
+}
+
+// ─────────────────────────────────────────────
+// Keyboard shortcuts
+// ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  // Modal shortcuts
+  const modalOpen = document.getElementById('modalOverlay').style.display === 'flex';
+  if (modalOpen) {
+    switch(e.key) {
+      case 'Escape':                   closeModal();        break;
+      case ' ': e.preventDefault();   modalFlip();         break;
+      case 'ArrowRight':               modalGo(1);          break;
+      case 'ArrowLeft':                modalGo(-1);         break;
+      case 'k': case 'K':             modalMark(true);     break;
+      case 'd': case 'D':             modalMark(false);    break;
+    }
+    return;
+  }
+  if (currentPage !== 'cards') return;
+  switch(e.key) {
+    case ' ':
+    case 'ArrowUp':
+    case 'ArrowDown':
+      e.preventDefault(); flipCard(); break;
+    case 'ArrowRight': go(1);        break;
+    case 'ArrowLeft':  go(-1);       break;
+    case 'k': case 'K': markCard(true);  break;
+    case 'd': case 'D': markCard(false); break;
+  }
+});
+
+// ─────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────
+loadProgress();
+buildDeck();
+render();
+
+// Restore dark mode immediately (before first paint)
+if (localStorage.getItem('topik1_dark') === '1') {
+  document.documentElement.setAttribute('data-dark', '');
+  document.getElementById('darkToggle').textContent = '☀️';
+}
+
+// Pre-build the word list DOM in the background so first click is instant
+(window.requestIdleCallback || (fn => setTimeout(fn, 200)))(function() {
+  if (!listInitialized) {
+    _buildWordListDOM();
+    listInitialized = true;
+    const saved = localStorage.getItem('topik1_layout');
+    if (saved) setLayout(saved);
+  }
+});
+</script>
+</body>
+</html>
