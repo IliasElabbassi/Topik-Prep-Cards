@@ -1247,8 +1247,9 @@ function switchPage(page) {
   currentPage = page;
 
   // toggle page nav buttons
-  document.getElementById('nav-cards').classList.toggle('active', page === 'cards');
-  document.getElementById('nav-list').classList.toggle('active',  page === 'list');
+  document.getElementById('nav-cards').classList.toggle('active',  page === 'cards');
+  document.getElementById('nav-list').classList.toggle('active',   page === 'list');
+  document.getElementById('nav-review').classList.toggle('active', page === 'review');
 
   // show/hide sections
   const cardsEls = [
@@ -1262,9 +1263,11 @@ function switchPage(page) {
   ];
   cardsEls.forEach(el => { if (el) el.style.display = page === 'cards' ? '' : 'none'; });
 
-  document.getElementById('listPage').style.display = page === 'list' ? 'block' : 'none';
+  document.getElementById('listPage').style.display   = page === 'list'   ? 'block' : 'none';
+  document.getElementById('reviewPage').style.display = page === 'review' ? 'block' : 'none';
 
-  if (page === 'list') renderList();
+  if (page === 'list')   renderList();
+  if (page === 'review') _rvUpdateSourceCounts();
 }
 
 // ─────────────────────────────────────────────
@@ -1495,6 +1498,164 @@ function _renderModal() {
 }
 
 // ─────────────────────────────────────────────
+// Review page
+// ─────────────────────────────────────────────
+let rvSource    = 'learning';
+let rvCount     = 20;
+let rvDeck      = [];
+let rvIdx       = 0;
+let rvFlipped   = false;
+let rvCorrect   = 0;
+let rvMissedN   = 0;
+let rvMissedIds = [];
+
+function _rvUpdateSourceCounts() {
+  const nLearning = V.filter(w => !learned.has(w[0])).length;
+  const nLearned  = learned.size;
+  document.getElementById('rvsrc-learning-count').textContent = nLearning + ' word' + (nLearning !== 1 ? 's' : '');
+  document.getElementById('rvsrc-all-count').textContent      = V.length  + ' words';
+  document.getElementById('rvsrc-learned-count').textContent  = nLearned  + ' word' + (nLearned  !== 1 ? 's' : '');
+}
+
+function setReviewSource(src) {
+  rvSource = src;
+  ['learning','all','learned'].forEach(s =>
+    document.getElementById('rvsrc-' + s).classList.toggle('selected', s === src)
+  );
+}
+
+function updateReviewCount(val) {
+  rvCount = +val;
+  document.getElementById('rvCountLabel').textContent = val;
+}
+
+function startReview() {
+  let pool;
+  if      (rvSource === 'learning') pool = V.filter(w => !learned.has(w[0]));
+  else if (rvSource === 'learned')  pool = V.filter(w =>  learned.has(w[0]));
+  else                              pool = [...V];
+
+  if (pool.length === 0) {
+    alert('No words in this category yet!');
+    return;
+  }
+
+  if (document.getElementById('rvShuffle').checked) {
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+  }
+
+  rvDeck      = pool.slice(0, rvCount).map(w => w[0]);
+  rvIdx       = 0;
+  rvCorrect   = 0;
+  rvMissedN   = 0;
+  rvMissedIds = [];
+
+  _rvShowSection('rvSession');
+  _rvRender();
+}
+
+function _rvShowSection(id) {
+  ['rvSetup','rvSession','rvSummary'].forEach(s =>
+    document.getElementById(s).classList.toggle('active', s === id)
+  );
+}
+
+function _rvRender() {
+  const id   = rvDeck[rvIdx];
+  const word = V.find(w => w[0] === id);
+  if (!word) return;
+
+  rvFlipped = false;
+  document.getElementById('rvCard').classList.remove('flipped');
+  document.getElementById('rvNum').textContent      = '#' + word[0];
+  document.getElementById('rvNumB').textContent     = '#' + word[0];
+  document.getElementById('rvKorean').textContent   = word[1];
+  document.getElementById('rvEnglish').textContent  = word[2];
+  document.getElementById('rvKorSm').textContent    = word[1];
+
+  const pct = (rvIdx / rvDeck.length) * 100;
+  document.getElementById('rvProgressBar').style.width = pct + '%';
+  document.getElementById('rvPos').textContent      = (rvIdx + 1) + ' / ' + rvDeck.length;
+  document.getElementById('rvCorrect').textContent  = '✓ ' + rvCorrect;
+  document.getElementById('rvMissed').textContent   = '✗ ' + rvMissedN;
+
+  document.getElementById('rvBtnMissed').disabled = true;
+  document.getElementById('rvBtnGot').disabled    = true;
+}
+
+function reviewFlip() {
+  rvFlipped = !rvFlipped;
+  document.getElementById('rvCard').classList.toggle('flipped', rvFlipped);
+  if (rvFlipped) {
+    document.getElementById('rvBtnMissed').disabled = false;
+    document.getElementById('rvBtnGot').disabled    = false;
+  }
+}
+
+function reviewAnswer(correct) {
+  const id = rvDeck[rvIdx];
+  if (correct) {
+    rvCorrect++;
+  } else {
+    rvMissedN++;
+    rvMissedIds.push(id);
+  }
+  rvIdx++;
+  if (rvIdx >= rvDeck.length) {
+    _rvShowSummary();
+  } else {
+    _rvRender();
+  }
+}
+
+function endReviewEarly() {
+  _rvShowSummary();
+}
+
+function _rvShowSummary() {
+  const total = rvCorrect + rvMissedN;
+  const pct   = total > 0 ? Math.round((rvCorrect / total) * 100) : 0;
+
+  let emo, title, sub;
+  if      (pct === 100) { emo = '🏆'; title = 'Perfect!';     sub = 'You got every word right!'; }
+  else if (pct >= 80)   { emo = '🎉'; title = 'Great work!';  sub = 'Almost there — keep it up!'; }
+  else if (pct >= 60)   { emo = '👍'; title = 'Good effort!'; sub = 'Keep practicing those tricky ones.'; }
+  else                  { emo = '💪'; title = 'Keep going!';  sub = 'Every review brings you closer.'; }
+
+  document.getElementById('rvSumEmo').textContent    = emo;
+  document.getElementById('rvSumTitle').textContent  = title;
+  document.getElementById('rvSumSub').textContent    = sub;
+  document.getElementById('rvSumGot').textContent    = rvCorrect;
+  document.getElementById('rvSumMissed').textContent = rvMissedN;
+  document.getElementById('rvSumPct').textContent    = pct + '%';
+
+  const btnMissed = document.getElementById('rvBtnMissedAgain');
+  btnMissed.style.display = rvMissedIds.length > 0 ? '' : 'none';
+  document.getElementById('rvMissedCount').textContent = rvMissedIds.length;
+
+  document.getElementById('rvProgressBar').style.width = '100%';
+  _rvShowSection('rvSummary');
+}
+
+function reviewMissed() {
+  rvDeck      = [...rvMissedIds];
+  rvIdx       = 0;
+  rvCorrect   = 0;
+  rvMissedN   = 0;
+  rvMissedIds = [];
+  _rvShowSection('rvSession');
+  _rvRender();
+}
+
+function showReviewSetup() {
+  _rvUpdateSourceCounts();
+  _rvShowSection('rvSetup');
+}
+
+// ─────────────────────────────────────────────
 // Dark mode
 // ─────────────────────────────────────────────
 function toggleDarkMode() {
@@ -1525,6 +1686,20 @@ document.addEventListener('keydown', e => {
       case 'ArrowLeft':                modalGo(-1);         break;
       case 'k': case 'K':             modalMark(true);     break;
       case 'd': case 'D':             modalMark(false);    break;
+    }
+    return;
+  }
+  // Review page shortcuts (session only)
+  if (currentPage === 'review' && document.getElementById('rvSession').classList.contains('active')) {
+    switch(e.key) {
+      case ' ':
+      case 'ArrowUp':
+      case 'ArrowDown':
+        e.preventDefault(); reviewFlip(); break;
+      case 'k': case 'K':
+        if (!document.getElementById('rvBtnGot').disabled)    reviewAnswer(true);  break;
+      case 'd': case 'D':
+        if (!document.getElementById('rvBtnMissed').disabled) reviewAnswer(false); break;
     }
     return;
   }
